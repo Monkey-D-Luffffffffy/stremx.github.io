@@ -2520,6 +2520,15 @@
               </div>
             </div>
             <div class="trending-card"
+              onclick="openFullscreen('https://www.livereacting.com/tools/hls-player-embed?url=https%3A%2F%2Fvid.fastinternetz.workers.dev%2Fvideo.m3u8%3Fq%3DTVhnZnZ4MDBiRkJJR0Yya1BXN0xyUTo0Ukw5YmFPY05VY2xRaHVYU1JWYjJQYTBJWW9SVmF5cm5uZ3otTFFYWTNJcFY4V3NZY2tFRWhyZ2FNb2VSa3Z0NmZBS19PSUpyOUhjQW4tejVUZVdGalF6YldEcnc5TmRuMGFiU0RKRllfZmFwVExweE5qRjJUbXAxelRGLVRHSEg2eUJtaWZDY0tlalVnQXcwU1BzbllFcXkyU2wtaFcyNk9scVlacUVkVG5uS2hXTlNEd3dZQ1ZyUmRxbUx0T1lvN092R0lranNzY01sQ3dlVnVoS05ybjhfTUdEUDJ0R0trTmNja1JraWtoSVZyVkZRUU1yUFpJQnZqcVJRV09IMUZISjgyV2plLXB3Z3p3ZFRzRjZmQnVwVkd0dUdXYzBZVl85U2lJaUE0aFZpYjJqYXlhbVI1dTdWN3d5Q2sxQ2FHS2FCWGd0c2o0ck1LUzFrc1BSenVGSlZXSG02UzV4VE9BRTVjVTFzUlFFY0pGdDJfNnRSWkNzb180dkpfT29CSzF2VGZIMV9pVnNNUVoyU25HOFFSTFJmNkc1UERFOTNHUlRuX043a0dN', 'Puss in Boots: The Last Wish', ['HD', 'Adventure', '2022'], 'Puss in Boots discovers that his passion for adventure has come at a price: he has burned through eight of his nine lives. Puss sets out on an epic journey to find the mythical Last Wish and restore his nine lives.')">
+              <img src="https://image.tmdb.org/t/p/w500/kuf6dutpsT0vSVehic3EZIqkOBt.jpg"
+                alt="Puss in Boots: The Last Wish"
+                onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=Puss+in+Boots+The+Last+Wish'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"
               onclick="openFullscreen('https://www.livereacting.com/tools/hls-player-embed?url=https%3A%2F%2Fvid.fastinternetz.workers.dev%2Fvideo.m3u8%3Fq%3DamxyQmtBdHVST1dHZmdhYTdnLXZjdzpxRU1YVlJWRjRoTllXU0ZWN19vTFJoTkdjWHJ1X0xNT200cURkb3gzTlJiNFpoTFFkek01dE9hLWFvamZIN0o2dUtfWTVJSHp0Q0liTWZUeEtRLXNBNlA2RmtKWHFPZ2J6WGlSbFptNDlLUzYwMTlvUUFtUWpXdVJoY0xGZFNxQlp2SVBCTXBfT0lPRTlhOGRNSU1sMFhGY2Y0aWtSWDhQUnNPM0JvZ1NIbjhXTFlNQkhRZGN1RUs4RHhhTTNJLWpBbFdKbWZuekVrTmRwUmFVTHh0aUh4Y0Y5aHVENE42OGZsUURDQkhRd2hhMk5xWmh2d3paWnJnMGNIWjd5WTN6RUNsV0Y3dkg5dG5NMTlDbHkxUjZvdUhuQy03ZnR1eGpIbmpoMmRuRXl0ZlJYaXdzOHZIUHlySWp5aWhOOWxxci1BOUx4bXd3Ym5KMzI5LUYySHJVVXJmWUNPUjktbFVLZ2ozRWE2ai1kdUpNM2dqb2ZwZVJIUEpONmdLcS00VTRBN1d1c2ljd25vTTN6bE1ZenZFdkN3ZDZSZUZId0hWNm9JQWEtT19jdHE4', 'Big Hero 6', ['HD', 'Family', '2014'], 'A young robotics prodigy named Hiro forms a superhero team to combat a masked villain threatening the city of San Fransokyo.')">
               <img src="https://image.tmdb.org/t/p/w500/2mxS4wUimwlLmI1xp6QW6NSU361.jpg"
                 alt="Big Hero 6"
@@ -2533,7 +2542,7 @@
       </div>
     </section>
 
-    
+
     <!-- Series Section -->
     <section class="section" id="series">
       <h2 class="section-title">TV Series</h2>
@@ -2749,11 +2758,11 @@
   <!-- Settings Content -->
   <div class="settings-content" id="settingsContent">
     <div class="settings-grid">
-      
+
       <!-- Profile Management Card -->
       <div class="settings-card">
         <h3 class="settings-card-title">Profile Management</h3>
-        
+
         <div class="setting-item profile-section">
           <div class="profile-preview">
             <img id="settingsProfilePic" src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png"
@@ -3049,7 +3058,7 @@
     </div>
   </div>
 
-  
+
 
   <div class="settings-section">
     <h3 class="settings-section-title">Interface</h3>
@@ -3354,7 +3363,7 @@
 
     function showMovieDetails(title, meta, description, poster) {
       currentMovieData = { title, meta, description, poster };
-      
+
       const modal = document.getElementById('movieDetailsModal');
       const detailsTitle = document.getElementById('detailsTitle');
       const detailsMeta = document.getElementById('detailsMeta');
@@ -3381,18 +3390,18 @@
       const stars = document.createElement('div');
       stars.className = 'stars';
       const rating = Math.floor(Math.random() * 2) + 4; // Random rating 4-5 stars
-      
+
       for (let i = 1; i <= 5; i++) {
         const star = document.createElement('span');
         star.className = 'star';
         star.textContent = i <= rating ? '★' : '☆';
         stars.appendChild(star);
       }
-      
+
       const ratingText = document.createElement('span');
       ratingText.className = 'rating-text';
       ratingText.textContent = `${rating}/5`;
-      
+
       ratingContainer.appendChild(stars);
       ratingContainer.appendChild(ratingText);
       detailsMeta.appendChild(ratingContainer);
@@ -3475,7 +3484,7 @@
           if (genre.toLowerCase().includes(genreFilter)) {
             hasGenre = true;
           }
-          
+
           // Check meta items
           metaItems.forEach(item => {
             if (item.textContent.toLowerCase().includes(genreFilter)) {
@@ -3496,7 +3505,7 @@
 
         const img = card.querySelector('img');
         const altText = img ? img.alt.toLowerCase() : '';
-        
+
         if (altText.includes('action') && genreFilter === 'action' ||
             altText.includes('comedy') && genreFilter === 'comedy' ||
             altText.includes('family') && genreFilter === 'family' ||
@@ -4090,7 +4099,7 @@
     const originalUpdateProfileDisplay = updateProfileDisplay;
     updateProfileDisplay = function(profile) {
       originalUpdateProfileDisplay(profile);
-      
+
       // Also update settings area elements
       const settingsProfilePic = document.getElementById('settingsProfilePic');
       const settingsProfileName = document.getElementById('settingsProfileName');
@@ -4110,7 +4119,7 @@
       const usernameInput = settingsActive ? 
         document.getElementById('settingsUsernameInput') : 
         document.getElementById('usernameInput');
-      
+
       if (usernameInput) {
         usernameInput.focus();
         usernameInput.select();
