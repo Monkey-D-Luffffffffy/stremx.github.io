@@ -1,0 +1,4633 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>StreamX</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e50914'/%3E%3Cpath d='M20 20h60v60H20z' fill='%23000'/%3E%3Ccircle cx='35' cy='35' r='8' fill='%23e50914'/%3E%3Ccircle cx='65' cy='35' r='8' fill='%23e50914'/%3E%3Ccircle cx='35' cy='65' r='8' fill='%23e50914'/%3E%3Ccircle cx='65' cy='65' r='8' fill='%23e50914'/%3E%3Cpath d='M40 45l15 8-15 8z' fill='%23fff'/%3E%3C/svg%3E">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    :root {
+      --primary-gradient: linear-gradient(135deg, #e50914, #ff6b35);
+      --card-bg: rgba(15, 15, 15, 0.95);
+      --glass-bg: rgba(255, 255, 255, 0.1);
+      --text-primary: #ffffff;
+      --text-secondary: rgba(255, 255, 255, 0.8);
+      --border-color: rgba(255, 255, 255, 0.1);
+      --shadow-primary: 0 8px 32px rgba(0, 0, 0, 0.6);
+      --shadow-hover: 0 25px 80px rgba(0, 0, 0, 0.9);
+      --blur-strong: blur(25px) saturate(180%);
+      --blur-medium: blur(15px) saturate(150%);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0f0f0f;
+      color: #ffffff;
+      font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.4;
+      overflow-x: hidden;
+    }
+
+    /* Enhanced UI Components */
+    .search-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .filter-container {
+      margin-left: 15px;
+    }
+
+    .filter-select {
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 25px;
+      color: white;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(15px);
+      min-width: 140px;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: #e50914;
+      background: rgba(255, 255, 255, 0.18);
+      box-shadow: 0 0 20px rgba(229, 9, 20, 0.3);
+    }
+
+    .filter-select option {
+      background: #1a1a1a;
+      color: white;
+      padding: 10px;
+    }
+
+    .view-toggle {
+      display: flex;
+      gap: 5px;
+      margin-left: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 25px;
+      padding: 5px;
+      backdrop-filter: blur(15px);
+    }
+
+    .view-btn {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.7);
+      padding: 10px 15px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 16px;
+    }
+
+    .view-btn.active,
+    .view-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+    }
+
+    /* Movie Details Modal */
+    .movie-details-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(20px);
+      opacity: 0;
+      transition: all 0.4s ease;
+    }
+
+    .movie-details-modal.active {
+      display: flex;
+      opacity: 1;
+      animation: modalSlideIn 0.5s ease-out;
+    }
+
+    @keyframes modalSlideIn {
+      0% {
+        opacity: 0;
+        transform: scale(0.8) translateY(50px);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .modal-content {
+      position: relative;
+      max-width: 900px;
+      max-height: 90vh;
+      background: linear-gradient(135deg, rgba(20, 20, 20, 0.98) 0%, rgba(40, 40, 40, 0.95) 100%);
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(30px);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      z-index: 10;
+      backdrop-filter: blur(10px);
+    }
+
+    .modal-close:hover {
+      background: rgba(229, 9, 20, 0.9);
+      transform: scale(1.1);
+    }
+
+    .movie-details-content {
+      display: flex;
+      gap: 40px;
+      padding: 40px;
+    }
+
+    .movie-poster-large {
+      flex: 0 0 300px;
+      height: 450px;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    }
+
+    .movie-poster-large img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .movie-details-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .movie-details-info h2 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0;
+      background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .details-meta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .movie-details-info p {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 1.1rem;
+      line-height: 1.6;
+      font-weight: 400;
+    }
+
+    .movie-actions {
+      display: flex;
+      gap: 15px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      padding: 15px 30px;
+      border: none;
+      border-radius: 30px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .play-btn {
+      background: linear-gradient(135deg, #e50914, #ff4757);
+      color: white;
+      box-shadow: 0 8px 25px rgba(229, 9, 20, 0.5);
+    }
+
+    .play-btn:hover {
+      background: linear-gradient(135deg, #ff4757, #e50914);
+      transform: translateY(-3px);
+      box-shadow: 0 15px 40px rgba(229, 9, 20, 0.7);
+    }
+
+    .info-btn {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(15px);
+    }
+
+    .info-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .share-btn {
+      background: linear-gradient(135deg, #4CAF50, #45a049);
+      color: white;
+      box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+    }
+
+    .share-btn:hover {
+      background: linear-gradient(135deg, #45a049, #4CAF50);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 35px rgba(76, 175, 80, 0.5);
+    }
+
+    /* Enhanced Movie Cards */
+    .movie-card {
+      position: relative;
+      cursor: pointer;
+    }
+
+    .movie-card::before {
+      content: 'Double-click for details';
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.8);
+      color: rgba(255, 255, 255, 0.8);
+      padding: 5px 10px;
+      border-radius: 15px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      opacity: 0;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      z-index: 10;
+    }
+
+    .movie-card:hover::before {
+      opacity: 1;
+    }
+
+    /* List View Styles */
+    .movies-grid.list-view {
+      display: block;
+    }
+
+    .movies-grid.list-view .movie-card {
+      display: flex;
+      flex-direction: row;
+      width: 100%;
+      margin-bottom: 20px;
+      height: 200px;
+    }
+
+    .movies-grid.list-view .movie-poster {
+      width: 300px;
+      height: 200px;
+      flex-shrink: 0;
+    }
+
+    .movies-grid.list-view .movie-info {
+      flex: 1;
+      padding: 25px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .movies-grid.list-view .movie-title {
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+    }
+
+    .movies-grid.list-view .movie-description {
+      display: block;
+      -webkit-line-clamp: 4;
+      font-size: 1rem;
+    }
+
+    /* Rating System */
+    .rating-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .stars {
+      display: flex;
+      gap: 2px;
+    }
+
+    .star {
+      color: #ffd700;
+      font-size: 16px;
+    }
+
+    .rating-text {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    /* Enhanced Header */
+    .header {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.8) 50%, transparent 100%);
+      backdrop-filter: blur(25px) saturate(180%);
+      padding: 20px 60px;
+      z-index: 1000;
+      transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .header.scrolled {
+      background: rgba(8, 8, 8, 0.98);
+      backdrop-filter: blur(40px);
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 15px 60px;
+    }
+
+    .nav-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .logo-image {
+      width: 40px;
+      height: 40px;
+      filter: brightness(0) saturate(100%) invert(15%) sepia(96%) saturate(7471%) hue-rotate(356deg) brightness(99%) contrast(112%);
+      transition: all 0.3s ease;
+    }
+
+    .logo-text {
+      font-size: 2.6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #e50914 0%, #ff6b35 50%, #ffa726 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -2px;
+      text-shadow: 0 0 30px rgba(229, 9, 20, 0.5);
+    }
+
+    .logo::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #e50914, #ff6b35);
+      transition: width 0.3s ease;
+      border-radius: 2px;
+    }
+
+    .logo:hover::after {
+      width: 100%;
+    }
+
+    .logo:hover {
+      transform: scale(1.05);
+    }
+
+    .logo:hover .logo-image {
+      filter: brightness(0) saturate(100%) invert(39%) sepia(100%) saturate(1934%) hue-rotate(356deg) brightness(103%) contrast(108%);
+      transform: rotate(10deg);
+    }
+
+    .logo:hover .logo-text {
+      filter: brightness(1.3);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 45px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: rgba(255, 255, 255, 0.9);
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      position: relative;
+      padding: 10px 0;
+    }
+
+    .nav-links a::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #e50914, #ff6b35);
+      transition: all 0.3s ease;
+      transform: translateX(-50%);
+      border-radius: 1px;
+    }
+
+    .nav-links a:hover {
+      color: #ffffff;
+      transform: translateY(-2px);
+    }
+
+    .nav-links a:hover::before {
+      width: 100%;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 25px;
+    }
+
+    .search-input {
+      padding: 16px 24px;
+      border: 2px solid var(--border-color);
+      border-radius: 35px;
+      background: var(--glass-bg);
+      color: var(--text-primary);
+      font-size: 15px;
+      width: 300px;
+      transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+      backdrop-filter: var(--blur-medium);
+      font-weight: 500;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .search-input::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transition: left 0.6s ease;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #e50914;
+      background: rgba(255, 255, 255, 0.18);
+      box-shadow: 0 0 40px rgba(229, 9, 20, 0.5), 0 8px 25px rgba(0, 0, 0, 0.3);
+      transform: scale(1.03) translateY(-2px);
+      width: 350px;
+    }
+
+    .search-input:focus::before {
+      left: 100%;
+    }
+
+    .search-input::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+      font-weight: 400;
+    }
+
+    .search-icon,
+    .settings-icon,
+    .notifications-icon {
+      width: 42px;
+      height: 42px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+      backdrop-filter: blur(15px);
+      font-size: 18px;
+    }
+
+    .search-icon:hover,
+    .settings-icon:hover,
+    .notifications-icon:hover {
+      background: rgba(229, 9, 20, 0.8);
+      transform: scale(1.1);
+      box-shadow: 0 8px 25px rgba(229, 9, 20, 0.4);
+    }
+
+    .profile-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+    }
+
+    .profile-avatar:hover {
+      border-color: rgba(255, 255, 255, 0.4);
+      transform: scale(1.05);
+    }
+
+    /* Enhanced Hero Section */
+    .hero {
+      position: relative;
+      height: 90vh;
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.5) 40%, transparent 70%),
+        linear-gradient(45deg, rgba(229, 9, 20, 0.15) 0%, rgba(255, 107, 53, 0.1) 50%, transparent 80%),
+        radial-gradient(circle at 20% 30%, rgba(229, 9, 20, 0.2) 0%, transparent 50%),
+        url('https://images.unsplash.com/photo-1489599735188-3c4de9ece6e5?w=1920&h=1080&fit=crop') center/cover;
+      display: flex;
+      align-items: center;
+      padding: 0 60px;
+      margin-top: 80px;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 30% 50%, rgba(229, 9, 20, 0.1) 0%, transparent 50%);
+      animation: heroFloat 8s ease-in-out infinite;
+    }
+
+    @keyframes heroFloat {
+      0%, 100% {
+        transform: translateY(0px) scale(1);
+        opacity: 0.8;
+      }
+      50% {
+        transform: translateY(-15px) scale(1.02);
+        opacity: 1;
+      }
+    }
+
+    @keyframes cardFloat {
+      0%, 100% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-5px);
+      }
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: -1000px 0;
+      }
+      100% {
+        background-position: 1000px 0;
+      }
+    }
+
+    .hero-content {
+      max-width: 700px;
+      z-index: 2;
+      animation: heroSlideIn 1.2s ease-out;
+    }
+
+    @keyframes heroSlideIn {
+      0% {
+        opacity: 0;
+        transform: translateX(-80px) translateY(30px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateX(0) translateY(0);
+      }
+    }
+
+    .hero h1 {
+      font-size: 4.5rem;
+      font-weight: 800;
+      margin-bottom: 30px;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 50%, #e0e0e0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+      letter-spacing: -2px;
+    }
+
+    .hero p {
+      font-size: 1.4rem;
+      margin-bottom: 40px;
+      color: rgba(255, 255, 255, 0.9);
+      line-height: 1.6;
+      font-weight: 400;
+    }
+
+    .btn {
+      padding: 18px 45px;
+      border: none;
+      border-radius: 35px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(15px);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.6s ease;
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%);
+      color: #000000;
+      box-shadow: 0 12px 35px rgba(255, 255, 255, 0.25);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.5) 50%, transparent 70%);
+      transform: translateX(-100%);
+      transition: transform 0.6s ease;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #f8f8f8 0%, #e8e8e8 100%);
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 0 25px 60px rgba(255, 255, 255, 0.4);
+    }
+
+    .btn-primary:hover::after {
+      transform: translateX(100%);
+    }
+
+    /* Enhanced Content Sections */
+    .content {
+      padding: 0 60px;
+      margin-top: -80px;
+      position: relative;
+      z-index: 3;
+    }
+
+    .section {
+      margin-bottom: 90px;
+      padding: 0 10px;
+    }
+
+    .section-title {
+      font-size: 2.8rem;
+      font-weight: 800;
+      margin-bottom: 50px;
+      background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 50%, #d0d0d0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      position: relative;
+      padding-left: 30px;
+      letter-spacing: -1.5px;
+      text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .section-title::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 6px;
+      height: 45px;
+      background: linear-gradient(135deg, #e50914, #ff6b35, #ffa726);
+      border-radius: 4px;
+      box-shadow: 0 0 25px rgba(229, 9, 20, 0.6), 0 0 50px rgba(229, 9, 20, 0.3);
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow {
+      0% {
+        box-shadow: 0 0 25px rgba(229, 9, 20, 0.6), 0 0 50px rgba(229, 9, 20, 0.3);
+      }
+      100% {
+        box-shadow: 0 0 35px rgba(229, 9, 20, 0.8), 0 0 70px rgba(229, 9, 20, 0.4);
+      }
+    }
+
+    /* Enhanced Movie Cards */
+    .movies-container,
+    .trending-container {
+      overflow-x: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #e50914 #333;
+      padding-bottom: 15px;
+    }
+
+    .movies-container::-webkit-scrollbar,
+    .trending-container::-webkit-scrollbar {
+      height: 10px;
+    }
+
+    .movies-container::-webkit-scrollbar-track,
+    .trending-container::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 5px;
+    }
+
+    .movies-container::-webkit-scrollbar-thumb,
+    .trending-container::-webkit-scrollbar-thumb {
+      background: linear-gradient(90deg, #e50914, #ff6b35);
+      border-radius: 5px;
+    }
+
+    .trending-grid,
+    .movies-grid {
+      display: flex;
+      gap: 15px;
+      padding: 15px 0;
+    }
+
+    .trending-card {
+      position: relative;
+      flex: 0 0 220px;
+      height: 330px;
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+      background: rgba(15, 15, 15, 0.95);
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px) saturate(180%);
+      animation: cardFloat 6s ease-in-out infinite;
+    }
+
+    .trending-card:nth-child(odd) {
+      animation-delay: -2s;
+    }
+
+    .trending-card:nth-child(even) {
+      animation-delay: -4s;
+    }
+
+    .trending-card:hover {
+      transform: scale(1.1) translateY(-15px) rotateY(5deg);
+      z-index: 100;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9), 
+                  0 0 0 1px rgba(255, 255, 255, 0.25),
+                  0 0 80px rgba(229, 9, 20, 0.3);
+      transition-delay: 0.1s;
+      animation-play-state: paused;
+    }
+
+    .trending-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: all 0.4s ease;
+      filter: brightness(0.9) contrast(1.1);
+    }
+
+    .trending-card:hover img {
+      filter: brightness(1.2) saturate(1.3) contrast(1.2);
+      transform: scale(1.05);
+    }
+
+    .trending-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(229, 9, 20, 0.4) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: all 0.4s ease;
+      backdrop-filter: blur(8px);
+    }
+
+    .trending-card:hover .trending-overlay {
+      opacity: 1;
+    }
+
+    .trending-overlay .play-icon {
+      width: 0;
+      height: 0;
+      border-left: 30px solid #ffffff;
+      border-top: 18px solid transparent;
+      border-bottom: 18px solid transparent;
+      margin-left: 6px;
+      filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.4));
+      animation: playPulse 2s infinite;
+    }
+
+    @keyframes playPulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.15);
+        opacity: 0.8;
+      }
+    }
+
+    .movie-card {
+      flex: 0 0 360px;
+      background: rgba(15, 15, 15, 0.95);
+      backdrop-filter: blur(20px) saturate(180%);
+      border-radius: 20px;
+      overflow: hidden;
+      transition: all calc(0.4s * var(--animation-speed)) cubic-bezier(0.23, 1, 0.320, 1);
+      cursor: pointer;
+      position: relative;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .movie-card.grid-small {
+      flex: 0 0 280px;
+    }
+
+    .movie-card.grid-medium {
+      flex: 0 0 360px;
+    }
+
+    .movie-card.grid-large {
+      flex: 0 0 450px;
+    }
+
+    .movie-card:hover {
+      transform: scale(1.08) translateY(-12px) rotateX(5deg);
+      z-index: 100;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.9), 
+                  0 0 0 1px rgba(255, 255, 255, 0.2),
+                  0 0 60px rgba(229, 9, 20, 0.2);
+      border-color: rgba(255, 255, 255, 0.25);
+      background: rgba(20, 20, 20, 0.98);
+    }
+
+    .movie-card:hover .movie-info {
+      background: rgba(0, 0, 0, 0.95);
+    }
+
+    .movie-poster {
+      width: 100%;
+      height: 200px;
+      background: #222;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .movie-poster iframe,
+    .movie-poster img {
+      width: 100%;
+      height: 100%;
+      border: none;
+      object-fit: cover;
+      transition: all 0.4s ease;
+    }
+
+    .movie-card:hover .movie-poster iframe,
+    .movie-card:hover .movie-poster img {
+      transform: scale(1.05);
+      filter: brightness(1.1) saturate(1.2);
+    }
+
+    .movie-info {
+      padding: 20px;
+      background: rgba(20, 20, 20, 0.8);
+      transition: all 0.3s ease;
+    }
+
+    .movie-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #ffffff;
+      line-height: 1.3;
+      letter-spacing: -0.5px;
+    }
+
+    .movie-meta {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      background: linear-gradient(135deg, #e50914, #ff4757);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 8px rgba(229, 9, 20, 0.3);
+    }
+
+    .movie-description {
+      color: #d2d2d2;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      font-weight: 400;
+    }
+
+    .play-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.9);
+      border: 3px solid #ffffff;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .movie-card:hover .play-overlay {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1.1);
+    }
+
+    .play-icon {
+      width: 0;
+      height: 0;
+      border-left: 16px solid #ffffff;
+      border-top: 10px solid transparent;
+      border-bottom: 10px solid transparent;
+      margin-left: 4px;
+    }
+
+    /* Enhanced Fullscreen Modal */
+    .fullscreen-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.98);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(15px);
+      opacity: 0;
+      transition: all 0.5s cubic-bezier(0.23, 1, 0.320, 1);
+    }
+
+    .fullscreen-modal.active {
+      display: flex;
+      opacity: 1;
+      animation: modalFadeIn 0.5s ease-out;
+    }
+
+    /* When browser is in fullscreen mode, fill entire screen */
+    .fullscreen-modal.browser-fullscreen {
+      background: rgba(0, 0, 0, 1);
+      backdrop-filter: none;
+    }
+
+    .fullscreen-modal.browser-fullscreen .fullscreen-content {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: none !important;
+      max-height: none !important;
+    }
+
+    .fullscreen-modal.browser-fullscreen .player-controls {
+      display: none !important;
+    }
+
+    .fullscreen-modal.browser-fullscreen .fullscreen-overlay {
+      display: none !important;
+    }
+
+    .fullscreen-modal.browser-fullscreen iframe {
+      border-radius: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+    }
+
+    @keyframes modalFadeIn {
+      0% {
+        opacity: 0;
+        transform: scale(0.9);
+        backdrop-filter: blur(0px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: scale(1);
+        backdrop-filter: blur(15px);
+      }
+    }
+
+    .fullscreen-content {
+      position: relative;
+      width: 95%;
+      height: 90%;
+      max-width: 1600px;
+      max-height: 900px;
+      transform: scale(0.9);
+      transition: all 0.5s ease-out;
+    }
+
+    .fullscreen-modal.active .fullscreen-content {
+      transform: scale(1);
+    }
+
+    .fullscreen-content iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-radius: 20px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+      background: #000;
+    }
+
+    .player-controls {
+      position: absolute;
+      top: -100px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(20, 20, 20, 0.95) 100%);
+      backdrop-filter: blur(30px);
+      padding: 25px 40px;
+      border-radius: 20px 20px 0 0;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .player-title {
+      color: #ffffff;
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin: 0;
+      opacity: 0;
+      animation: slideInLeft 0.8s ease-out 0.3s forwards;
+      letter-spacing: -0.5px;
+    }
+
+    .player-buttons {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .player-btn {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 50px;
+      color: white;
+      padding: 14px 25px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+      animation: slideInRight 0.8s ease-out 0.5s forwards;
+      backdrop-filter: blur(10px);
+    }
+
+    .player-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .close-fullscreen {
+      background: linear-gradient(135deg, #e50914, #ff4757);
+      border: none;
+      border-radius: 50px;
+      color: white;
+      padding: 14px 30px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 700;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 25px rgba(229, 9, 20, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .close-fullscreen:hover {
+      background: linear-gradient(135deg, #ff4757, #e50914);
+      transform: translateY(-2px);
+      box-shadow: 0 15px 40px rgba(229, 9, 20, 0.7);
+    }
+
+    .fullscreen-overlay {
+      position: absolute;
+      bottom: -80px;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(20, 20, 20, 0.95) 100%);
+      backdrop-filter: blur(30px);
+      padding: 25px 40px;
+      border-radius: 0 0 20px 20px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-top: none;
+      opacity: 0;
+      animation: slideInUp 0.8s ease-out 0.7s forwards;
+    }
+
+    .movie-details {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #ffffff;
+    }
+
+    .movie-meta-overlay {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .meta-tag {
+      background: linear-gradient(135deg, #e50914, #ff6b35);
+      padding: 6px 16px;
+      border-radius: 25px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+    }
+
+    .movie-description-overlay {
+      color: rgba(255, 255, 255, 0.85);
+      font-size: 1rem;
+      line-height: 1.5;
+      max-width: 700px;
+      font-weight: 400;
+    }
+
+    .quality-indicator {
+      background: rgba(76, 175, 80, 0.2);
+      border: 2px solid #4CAF50;
+      padding: 12px 20px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #4CAF50;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(10px);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .quality-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #4CAF50;
+      animation: qualityPulse 2s infinite;
+      box-shadow: 0 0 10px #4CAF50;
+    }
+
+    @keyframes```text qualityPulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.2);
+        opacity: 0.7;
+      }
+    }
+
+    /* Enhanced Loading Animation */
+    .loading-spinner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60px;
+      height: 60px;
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-top: 4px solid #e50914;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      z-index: 10;
+      box-shadow: 0 0 30px rgba(229, 9, 20, 0.3);
+    }
+
+    @keyframes spin {
+      0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+      }
+
+      100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+      }
+    }
+
+    /* Bottom Navigation Bar */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, rgba(15, 15, 15, 0.98) 0%, rgba(30, 30, 30, 0.95) 100%);
+      backdrop-filter: blur(40px);
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      display: flex;
+      justify-content: center;
+      padding: 15px 20px 25px;
+      z-index: 1000;
+      box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.6);
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 30px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-radius: 15px;
+      margin: 0 10px;
+      min-width: 80px;
+    }
+
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .nav-item.active {
+      background: linear-gradient(135deg, #e50914, #ff6b35);
+      box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+    }
+
+    .nav-icon {
+      font-size: 22px;
+      margin-bottom: 5px;
+      transition: transform 0.3s ease;
+    }
+
+    .nav-item:hover .nav-icon {
+      transform: scale(1.1);
+    }
+
+    .nav-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.9);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-item.active .nav-label {
+      color: #ffffff;
+    }
+
+    /* Main Content Area */
+    .main-content {
+      display: block;
+      padding-bottom: 100px; /* Add space for bottom nav */
+    }
+
+    .main-content.hidden {
+      display: none;
+    }
+
+    /* Settings Content Area */
+    .settings-content {
+      display: none;
+      padding: 120px 60px 120px;
+      min-height: 100vh;
+    }
+
+    .settings-content.active {
+      display: block;
+    }
+
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 30px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .settings-card {
+      background: rgba(15, 15, 15, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    }
+
+    .settings-card-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 25px;
+      padding-left: 15px;
+      position: relative;
+    }
+
+    .settings-card-title::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 25px;
+      background: linear-gradient(135deg, #e50914, #ff6b35);
+      border-radius: 2px;
+    }
+
+    /* Enhanced Footer */
+    .footer {
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+      padding: 100px 60px 60px;
+      margin-top: 150px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+    }
+
+    .footer::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent 0%, #e50914 30%, #ff6b35 70%, transparent 100%);
+    }
+
+    .footer-copy {
+      color: #737373;
+      font-size: 14px;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    /* Settings Panel */
+    .settings-panel {
+      position: fixed;
+      top: 0;
+      right: -300px;
+      width: 300px;
+      height: 100vh;
+      background: linear-gradient(135deg, rgba(15, 15, 15, 0.98) 0%, rgba(30, 30, 30, 0.95) 100%);
+      backdrop-filter: blur(40px);
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      z-index: 10000;
+      transition: right 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+      overflow-y: auto;
+      box-shadow: -20px 0 60px rgba(0, 0, 0, 0.8);
+    }
+
+    .settings-panel.active {
+      right: 0;
+    }
+
+    .settings-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .settings-title {
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .settings-close {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 50%;
+      color: white;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      font-size: 18px;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .settings-close:hover {
+      background: rgba(229, 9, 20, 0.8);
+      transform: scale(1.1);
+    }
+
+    .settings-section {
+      margin-bottom: 35px;
+    }
+
+    .settings-section-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 20px;
+      padding-left: 15px;
+      position: relative;
+    }
+
+    .settings-section-title::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 20px;
+      background: linear-gradient(135deg, #e50914, #ff6b35);
+      border-radius: 2px;
+    }
+
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      margin-bottom: 12px;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .setting-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .setting-label {
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .setting-description {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.8rem;
+      margin-top: 4px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 50px;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .toggle-switch.active {
+      background: linear-gradient(135deg, #e50914, #ff6b35);
+    }
+
+    .toggle-slider {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .toggle-switch.active .toggle-slider {
+      transform: translateX(26px);
+    }
+
+    .setting-select {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: white;
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .setting-select:focus {
+      outline: none;
+      border-color: #e50914;
+      box-shadow: 0 0 15px rgba(229, 9, 20, 0.3);
+    }
+
+    .setting-slider {
+      -webkit-appearance: none;
+      width: 100px;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.2);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .setting-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e50914, #ff6b35);
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(229, 9, 20, 0.4);
+    }
+
+    .settings-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 9999;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(8px);
+    }
+
+    .settings-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Profile Management Styles */
+    .profile-section {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 20px;
+    }
+
+    .profile-preview {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .profile-preview-img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .profile-info {
+      flex: 1;
+    }
+
+    .profile-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .profile-email {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .profile-edit-btn {
+      background: linear-gradient(135deg, #e50914, #ff6b35);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      align-self: flex-start;
+    }
+
+    .profile-edit-btn:hover {
+      background: linear-gradient(135deg, #ff6b35, #e50914);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(229, 9, 20, 0.4);
+    }
+
+    .setting-input {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: white;
+      padding: 10px 15px;
+      font-size: 0.9rem;
+      width: 200px;
+      transition: all 0.3s ease;
+    }
+
+    .setting-input:focus {
+      outline: none;
+      border-color: #e50914;
+      box-shadow: 0 0 15px rgba(229, 9, 20, 0.3);
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .setting-input::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .avatar-selector {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      max-width: 300px;
+    }
+
+    .avatar-option {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      position: relative;
+    }
+
+    .avatar-option:hover {
+      transform: scale(1.1);
+      border-color: #e50914;
+      box-shadow: 0 0 15px rgba(229, 9, 20, 0.5);
+    }
+
+    .avatar-option.selected {
+      border-color: #e50914;
+      box-shadow: 0 0 20px rgba(229, 9, 20, 0.6);
+    }
+
+    .avatar-option img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .color-selector {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .color-option {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      position: relative;
+    }
+
+    .color-option:hover {
+      transform: scale(1.2);
+      border-color: rgba(255, 255, 255, 0.8);
+    }
+
+    .color-option.selected::after {
+      content: 'â';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+      text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Enhanced Animations */
+    @keyframes slideInLeft {
+      0% {
+        opacity: 0;
+        transform: translateX(-40px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes slideInRight {
+      0% {
+        opacity: 0;
+        transform: translateX(40px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes slideInUp {
+      0% {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Series Episodes Styles */
+    .series-card {
+      flex: 0 0 360px;
+      background: rgba(20, 20, 20, 0.9);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all calc(0.4s * var(--animation-speed)) cubic-bezier(0.23, 1, 0.320, 1);
+      cursor: pointer;
+      position: relative;
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(15px);
+    }
+
+    .series-card:hover {
+      transform: scale(1.05) translateY(-8px);
+      z-index: 100;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .series-card:active {
+      transform: scale(1.02) translateY(-4px);
+      transition: all 0.1s ease;
+    }
+
+    .expand-icon {
+      width: 0;
+      height: 0;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .episodes-container {
+      width: 100%;
+      margin: 30px 0;
+      padding: 25px;
+      background: rgba(15, 15, 15, 0.95);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      display: none;
+      overflow: hidden;
+      transform: translateY(10px);
+      opacity: 0;
+      transition: all 0.5s cubic-bezier(0.23, 1, 0.320, 1);
+    }
+
+    .episodes-container.episodes-open {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .episodes-container.episodes-animating {
+      transform: translateY(0);
+    }
+
+    .episodes-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 25px;
+      padding-left: 15px;
+      position: relative;
+    }
+
+    .episodes-title::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 25px;
+      background: linear-gradient(135deg, #e50914, #ff6b35);
+      border-radius: 2px;
+    }
+
+    .episodes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .episode-card {
+      background: rgba(20, 20, 20, 0.8);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      opacity: 0;
+      transform: translateY(20px);
+      animation: slideInEpisode 0.5s ease-out forwards;
+    }
+
+    .episode-card:nth-child(1) {
+      animation-delay: 0.1s;
+    }
+
+    .episode-card:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .episode-card:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    .episode-card:nth-child(4) {
+      animation-delay: 0.4s;
+    }
+
+    .episode-card:nth-child(5) {
+      animation-delay: 0.5s;
+    }
+
+    .episode-card:nth-child(6) {
+      animation-delay: 0.6s;
+    }
+
+    @keyframes slideInEpisode {
+      0% {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .episode-card:hover:not(.coming-soon) {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .episode-card.coming-soon {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .episode-poster {
+      width: 100%;
+      height: 180px;
+      background: #222;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .episode-poster iframe,
+    .episode-poster img {
+      width: 100%;
+      height: 100%;
+      border: none;
+      object-fit: cover;
+      transition: all 0.3s ease;
+    }
+
+    .episode-card:hover:not(.coming-soon) .episode-poster iframe,
+    .episode-card:hover:not(.coming-soon) .episode-poster img {
+      transform: scale(1.05);
+    }
+
+    .episode-info {
+      padding: 20px;
+    }
+
+    .episode-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #ffffff;
+      line-height: 1.3;
+    }
+
+    .episode-meta {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .episode-description {
+      color: #d2d2d2;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .coming-soon-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.9);
+      color: rgba(255, 255, 255, 0.8);
+      padding: 10px 20px;
+      border-radius: 25px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Music Player Styles */
+    .music-container {
+      overflow-x: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #e50914 #333;
+      padding-bottom: 15px;
+    }
+
+    .music-container::-webkit-scrollbar {
+      height: 10px;
+    }
+
+    .music-container::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 5px;
+    }
+
+    .music-container::-webkit-scrollbar-thumb {
+      background: linear-gradient(90deg, #e50914, #ff6b35);
+      border-radius: 5px;
+    }
+
+    .music-grid {
+      display: flex;
+      gap: 30px;
+      padding: 15px 0;
+    }
+
+    .music-card {
+      flex: 0 0 400px;
+      background: rgba(15, 15, 15, 0.95);
+      backdrop-filter: blur(20px) saturate(180%);
+      border-radius: 20px;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+      position: relative;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .music-card:hover {
+      transform: scale(1.05) translateY(-8px);
+      z-index: 100;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.9), 
+                  0 0 0 1px rgba(255, 255, 255, 0.2),
+                  0 0 60px rgba(229, 9, 20, 0.2);
+      border-color: rgba(255, 255, 255, 0.25);
+      background: rgba(20, 20, 20, 0.98);
+    }
+
+    .music-info {
+      padding: 25px;
+      background: rgba(20, 20, 20, 0.8);
+      transition: all 0.3s ease;
+    }
+
+    .music-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: #ffffff;
+      line-height: 1.3;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .music-description {
+      color: #d2d2d2;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      font-weight: 400;
+      margin-bottom: 0;
+    }
+
+    .spotify-embed {
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.4);
+    }
+
+    .spotify-embed iframe {
+      transition: all 0.3s ease;
+      border-radius: 12px !important;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    }
+
+    .music-card:hover .spotify-embed iframe {
+      transform: scale(1.02);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .header {
+        padding: 15px 20px;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .hero {
+        padding: 0 20px;
+        height: 70vh;
+      }
+
+      .hero h1 {
+        font-size: 3rem;
+      }
+
+      .hero p {
+        font-size: 1.1rem;
+      }
+
+      .content {
+        padding: 0 20px;
+      }
+
+      .movie-card {
+        flex: 0 0 280px;
+      }
+
+      .trending-card {
+        flex: 0 0 180px;
+        height: 270px;
+      }
+
+      .footer {
+        padding: 60px 20px 40px;
+      }
+
+      .search-input {
+        width: 200px;
+      }
+
+      .search-input:focus {
+        width: 220px;
+      }
+
+      .music-card {
+        flex: 0 0 320px;
+      }
+
+      .music-info {
+        padding: 20px;
+      }
+
+      .music-title {
+        font-size: 1.2rem;
+      }
+
+      .spotify-embed {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <header class="header" id="header">
+    <div class="nav-container">
+      <div class="logo">
+        <img src="https://cdn-icons-png.flaticon.com/512/3075/3075977.png" alt="DriveFlix Logo" class="logo-image">
+        <span class="logo-text">StreamX</span>
+      </div>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="#movies">Movies</a></li>
+          <li><a href="#series">Series</a></li>
+          <li><a href="#music">Music</a></li>
+          <li><a href="#about">About</a></li>
+        </ul>
+      </nav>
+      <div class="nav-right">
+        <div class="search-container">
+          <input type="text" id="searchInput" placeholder="Search titles, people, genres" class="search-input">
+          <div class="search-icon" onclick="searchMovies()">🔍</div>
+        </div>
+        <div class="filter-container">
+          <select id="genreFilter" class="filter-select" onchange="filterMovies()">
+            <option value="">All Genres</option>
+            <option value="action">Action</option>
+            <option value="comedy">Comedy</option>
+            <option value="family">Family</option>
+            <option value="adventure">Adventure</option>
+            <option value="sci-fi">Sci-Fi</option>
+            <option value="musical">Musical</option>
+          </select>
+        </div>
+        <div class="view-toggle">
+          <button class="view-btn active" onclick="switchView('grid')" id="gridViewBtn">⊞</button>
+          <button class="view-btn" onclick="switchView('list')" id="listViewBtn">☰</button>
+        </div>
+        <div class="settings-icon" onclick="toggleSettings()">⚙️</div>
+        <div class="notifications-icon">🔔</div>
+        <div class="profile-menu">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png" alt="Profile"
+            class="profile-avatar" id="headerProfileAvatar" onclick="toggleSettings()">
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>Your Premium Collection</h1>
+      <p>Discover and enjoy your favorite movies in stunning quality. Every film, every moment, perfectly curated for
+        you.</p>
+      <div class="hero-buttons">
+        <a href="#movies" class="btn btn-primary">Explore Movies</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <div class="main-content" id="mainContent">
+    <!-- Content -->
+    <div class="content">
+      <!-- Trending Now -->
+      <section class="section">
+        <h2 class="section-title">Featured Collection</h2>
+      <div class="trending-row">
+        <div class="trending-container">
+          <div class="trending-grid">
+            <div class="trending-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1SgHBRcTH6U8tmQvm1ki7IYs2X94yfPPM/preview', 'A Minecraft Movie', ['HD', 'Adventure', '2025'], 'Four misfits are transported into the Overworld and must learn to survive while battling a Piglin Queen.')">
+              <img
+                src="https://pixieposters.co.uk/cdn/shop/files/a-minecraft-movie-movie-poster_5cac88b3-11f7-4cee-a99a-c7efe768ada8.webp?v=1748446044"
+                alt="A Minecraft Movie"
+                onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=A+Minecraft+Movie'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1QZNf2oysHR017fWLeCSoHRb1iKKdowMK/preview', 'Ghostbusters: Afterlife', ['HD', 'Comedy', '2021'], 'When a single mom and her two kids arrive in a small town, they begin to discover their connection to the original Ghostbusters.')">
+              <img src="https://image.tmdb.org/t/p/w500/sg4xJaufDiQl7caFEskBtQXfD4x.jpg" alt="Ghostbusters: Afterlife"
+                onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=Ghostbusters+Afterlife'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1kP9pQuPhoDjfJ_jlZnRamnqscOJluUYd/preview', 'Dragon Ball Super: Super Hero', ['HD', 'Action', '2022'], 'Piccolo and Gohan face the ultimate Androids created by the New Red Ribbon Army.')">
+              <img src="https://image.tmdb.org/t/p/w500/rugyJdeoJm7cSJL1q4jBpTNbxyU.jpg"
+                alt="Dragon Ball Super: Super Hero"
+                onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=Dragon+Ball+Super+Hero'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1bcJ4X5WvyimpbB8U15Mb1j-kzct-nFIZ/preview', 'Shrek', ['HD', 'Action', '2009'], 'We all know him, The myth, The legend, Shrek.')">
+              <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQpouXbVex_Jy0MqvcTwjyzYx6eCCZQFUedlg&s"
+                alt="Shrek"
+                onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=Shrek'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1fhs1fdOWIKyHxC63m_n2VOSWI2-jYg01/preview', 'Sonic The Hedgehog 3', ['HD', 'Family', '2024'], 'Sonic, Knuckles and Tails battle Shadow, a mysterious new enemy with unmatched powers.')">
+              <img src="https://i.ebayimg.com/00/s/MTYwMFgxMDc5/z/SPUAAOSwJAJm0TW2/$_57.JPG?set_id=880000500F"
+                alt="Sonic The Hedgehog 3"
+                onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=Sonic+The+Hedgehog+3'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/15dfOHvAzq1Y-TCvqE6aJDC1IKVB7IAhK/preview', 'One Piece Stampede', ['HD', 'Action', '2019'], 'The Straw Hat Pirates join forces with other pirates at the Pirates Festival, but when Douglas Bullet escapes, chaos ensues.')">
+              <img src="https://m.media-amazon.com/images/I/91rrgo7knjL._UF1000,1000_QL80_.jpg" alt="One Piece Stampede"
+                onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=One+Piece+Stampede'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1v2xqKQcAvndfcqsctZH73NR2AjFXsrUr/preview', 'Space Jam: A New Legacy', ['HD', 'Family', '2021'], 'LeBron James teams up with the Looney Tunes to save his son from a digital world.')">
+              <img src="https://image.tmdb.org/t/p/w500/5bFK5d3mVTAvBCXi5NPWH0tYjKl.jpg" alt="Space Jam: A New Legacy"
+                onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=Space+Jam+A+New+Legacy'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1dSeZ1c4_p8T_lW7z0qpKsebKYN-R3zHR/preview', 'Spider-Man: Across the Spider-Verse', ['HD', 'Action', '2023'], 'Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its very existence.')">
+              <img src="https://cdn.marvel.com/content/1x/spider-verse_art_of_book_cover.jpg"
+                alt="Spider-Man: Across the Spider-Verse"
+                onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=Spider-Man+Across+the+Spider-Verse'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1OsyF2LKJqjtv0b2Xd9GWOLcYkzny3VZo/preview', 'The Super Mario Bros. Movie', ['HD', 'Family', '2023'], 'Mario and Luigi are transported to the Mushroom Kingdom for an epic adventure.')">
+              <img src="https://images-cdn.ubuy.co.id/660d70aaba3a0770be5567de-the-super-mario-bros-movie-mushroom.jpg"
+                alt="The Super Mario Bros. Movie"
+                onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=The+Super+Mario+Bros+Movie'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"\
+              onclick="openFullscreen('https://drive.google.com/file/d/1cVPQwz-8_TFyAv0Rsjk51cLND67FonFY/preview', 'Wonka', ['HD', 'Family', '2023'], 'The wondrous story of how Willy Wonka became the world\'s greatest chocolate-maker.')">
+              <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQU-I2W56ND8a_uRu8WsOSFZ2be9ZV9AGe8lQ&s"
+                alt="Wonka" onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=Wonka'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1siki1wYP3LpfjFpUT8Z9lJuJzl7MdBhX/preview', 'Despicable Me 4', ['HD', 'Family', '2024'], 'Gru and Lucy and their girls welcome a new baby boy. When villain Maxime Le Mal escapes from prison, the family is forced to go on the run and into hiding.')">
+              <img
+                src="https://m.media-amazon.com/images/M/MV5BNzY0ZTlhYzgtOTgzZC00ZTg2LTk4NTEtZDllM2E2NGE5Njg2XkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg"
+                alt="Despicable Me 4"
+                onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=Despicable+Me+4'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"
+  onclick="openFullscreen('https://drive.google.com/file/d/1zTf0VIh-SoQJcpUy82uRYRdaNbj2iIhE/preview', 'Sonic The Hedechog 2', ['HD', 'Family', '2033'], 'Sonic meets a new friend, Tails and a new foe, Knuckles the Echinda.')">
+              <img
+                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR3yi-n47VMtZ0128JNQ__GYLLfZYDzWbJUAA&s"
+                alt="Despicable Me 4"
+                onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=Sonic+The+Hedechog+2'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/17rO8-6BeGxZ_2HelJIU_mefZQ_j-cpIb/preview', 'Deadpool & Wolverine', ['HD', 'Action', '2024'], 'Deadpool teams up with Wolverine to save the multiverse from an existential threat.')">
+              <img src="https://upload.wikimedia.org/wikipedia/en/4/4c/Deadpool_%26_Wolverine_poster.jpg"
+                alt="Deadpool & Wolverine"
+                onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=Deadpool+Wolverine'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/10qrrGAoRN3D01A7cUkrNuDELSAayfgwq/preview', 'Dog Man', ['HD', 'Family', '2025'], 'A police officer and his dog are fused together to create the ultimate crime-fighting hero.')">
+              <img
+                src="https://upload.wikimedia.org/wikipedia/en/thumb/6/67/Dog_Man_film_poster.jpg/250px-Dog_Man_film_poster.jpg"
+                alt="Dog Man" onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=Dog+Man'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1HC1FKq4RSF40cH9amVm4VkIbjohLoOiP/preview', 'Doctor Strange in the Multiverse of Madness', ['HD', 'Action', '2022'], 'Dr. Stephen Strange casts a forbidden spell that opens the doorway to the multiverse, including alternate versions of himself.')">
+              <img
+                src="https://upload.wikimedia.org/wikipedia/en/thumb/1/17/Doctor_Strange_in_the_Multiverse_of_Madness_poster.jpg/250px-Doctor_Strange_in_the_Multiverse_of_Madness_poster.jpg"
+                alt="Doctor Strange in the Multiverse of Madness"
+                onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=Doctor+Strange+Multiverse'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1oddQM8w-8UqQIvB-fPpy1h-7xvAbklmA/preview', 'Spider-Man: No Way Home', ['HD', 'Action', '2021'], 'Peter Parker seeks Doctor Strange\'s help to make the world forget he is Spider-Man, but the spell goes wrong.')">
+              <img src="https://m.media-amazon.com/images/I/81y0foYjoFL._UF894,1000_QL80_.jpg"
+                alt="Spider-Man: No Way Home"
+                onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=Spider-Man+No+Way+Home'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1lbDigsHVXpiIT3qokPLcN3VKqDax7rgm/preview', 'Venom: The Last Dance', ['HD', 'Action', '2024'], 'Eddie and Venom are on the run and face their most dangerous threat yet.')">
+              <img src="https://upload.wikimedia.org/wikipedia/en/a/a3/Venom_The_Last_Dance_Poster.jpg"
+                alt="Venom: The Last Dance"
+                onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=Venom+Last+Dance'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1siTn1l8gYcgh3nbITJVAiCUZrDdQG-wD/preview', 'Henry Danger: The Movie', ['HD', 'Comedy', '2020'], 'Henry Hart and Captain Man team up for their biggest adventure yet in this action-packed movie.')">
+              <img src="https://i.ebayimg.com/images/g/hHgAAOSwPN1n-Q0i/s-l1200.jpg" alt="Henry Danger: The Movie"
+                onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=Henry+Danger+Movie'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1kvdxs7jiV4VXsvGRM6MHU9GgQ1cnna5S/preview', 'Inside Out 2', ['HD', 'Family', '2024'], 'Riley is now a teenager and her emotions must navigate the complexities of adolescence.')">
+              <img
+                src="https://upload.wikimedia.org/wikipedia/en/thumb/f/f7/Inside_Out_2_poster.jpg/250px-Inside_Out_2_poster.jpg"
+                alt="Inside Out 2"
+                onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=Inside+Out+2'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1bqXaAnYlzvDN8Ic21OTHu7mQ2eBsEBha/preview', 'Avengers: Endgame', ['HD', 'Action', '2019'], 'The Avengers assemble one final time to undo Thanos\' actions and restore balance to the universe.')">
+              <img
+                src="https://m.media-amazon.com/images/I/81rE8qRYvaL._UF894,1000_QL80_.jpg"
+                alt="Avengers: Endgame"
+                onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=Avengers+Endgame'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1x0n_tZPq79HxAnV2ZwnVPTkBenFGZjx-/preview', 'Jurassic World Rebirth', ['HD', 'Action', '2025'], 'A new chapter in the Jurassic franchise with dinosaurs and adventure.')">
+              <img
+                src="https://upload.wikimedia.org/wikipedia/en/thumb/a/a5/Jurassic_World_Rebirth_poster.jpg/250px-Jurassic_World_Rebirth_poster.jpg"
+                alt="Jurassic World Rebirth"
+                onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=Jurassic+World+Rebirth'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"
+              onclick="openFullscreen('https://www.livereacting.com/tools/hls-player-embed?url=https%3A%2F%2Fmcflurry.plhjsbtlipsljifsrvct.xyz%2Fmovies%2Fd30468515b0f0d594858edd269ff4310%2Fplaylist.m3u8', 'Kpop Demon Hunters', ['HD', 'Action', '2024'], 'K-pop stars battle supernatural forces in this action-packed adventure combining music and demon hunting.')">
+              <img src="https://www.republicrecords.com/cdn/shop/files/REPU-00092_KPOP_DemonHunters_CollectionPage-Banner-02Mobile.png?v=1751556728&width=900"
+                alt="Kpop Demon Hunters"
+                onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=Kpop+Demon+Hunters'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+            <div class="trending-card"
+              onclick="openFullscreen('https://www.livereacting.com/tools/hls-player-embed?url=https%3A%2F%2Fmcflurry.plhjsbtlipsljifsrvct.xyz%2Fmovies%2F54a3996e8af394f7b9f3416c0d0476f4%2Fplaylist.m3u8', 'Lilo & Stitch', ['HD', 'Family', '2002'], 'A young Hawaiian girl adopts an unusual pet who is actually a notorious extra-terrestrial fugitive.')">
+              <img src="https://image.tmdb.org/t/p/w500/tUae3mefrDVTgm5mRzqWnZK6fOP.jpg"
+                alt="Lilo & Stitch"
+                onerror="this.src='https://via.placeholder.com/220x330/e50914/ffffff?text=Lilo+And+Stitch'">
+              <div class="trending-overlay">
+                <div class="play-icon"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- All Movies -->
+    <section class="section" id="movies">
+      <h2 class="section-title">Complete Library</h2>
+      <div class="movie-row">
+        <div class="movies-container">
+          <div class="movies-grid">
+
+            <div class="movie-card" data-genre="adventure"
+              onclick="openFullscreen('https://drive.google.com/file/d/1Oppg2lJlwwqKmPK8z4HNcdeiEyf6GaHq/preview', 'A Minecraft Movie', ['HD', 'Adventure', '2025'], 'Four misfits are transported into the Overworld and must learn to survive while battling a Piglin Queen.')"
+              oncontextmenu="showMovieDetails('A Minecraft Movie', ['HD', 'Adventure', '2025'], 'Four misfits are transported into the Overworld and must learn to survive while battling a Piglin Queen.', 'https://pixieposters.co.uk/cdn/shop/files/a-minecraft-movie-movie-poster_5cac88b3-11f7-4cee-a99a-c7efe768ada8.webp?v=1748446044'); return false;"
+              ondblclick="showMovieDetails('A Minecraft Movie', ['HD', 'Adventure', '2025'], 'Four misfits are transported into the Overworld and must learn to survive while battling a Piglin Queen.', 'https://pixieposters.co.uk/cdn/shop/files/a-minecraft-movie-movie-poster_5cac88b3-11f7-4cee-a99a-c7efe768ada8.webp?v=1748446044')"
+              <div class="movie-poster">
+                <iframe src="https://drive.google.com/file/d/1Oppg2lJlwwqKmPK8z4HNcdeiEyf6GaHq/preview"
+                  allow="autoplay"></iframe>
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">A Minecraft Movie</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Adventure</span>
+                  <span class="meta-item">2025</span>
+                </div>
+                <p class="movie-description">Four misfits are transported into the Overworld and must learn to survive
+                  while battling a Piglin Queen.</p>
+              </div>
+            </div>
+
+            <div class="movie-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/17rO8-6BeGxZ_2HelJIU_mefZQ_j-cpIb/preview', 'Deadpool & Wolverine', ['HD', 'Action', '2024'], 'Deadpool teams up with Wolverine to save the multiverse from an existential threat.')">
+              <div class="movie-poster">
+                <iframe src="https://drive.google.com/file/d/17rO8-6BeGxZ_2HelJIU_mefZQ_j-cpIb/preview"
+                  allow="autoplay"></iframe>
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">Deadpool & Wolverine</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Action</span>
+                  <span class="meta-item">2024</span>
+                </div>
+                <p class="movie-description">Deadpool teams up with Wolverine to save the multiverse from an existential
+                  threat.</p>
+              </div>
+            </div>
+
+            <div class="movie-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1dSeZ1c4_p8T_lW7z0qpKsebKYN-R3zHR/preview', 'Spider-Man: Across the Spider-Verse', ['HD', 'Action', '2023'], 'Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its very existence.')">
+              <div class="movie-poster">
+                <img src="https://cdn.marvel.com/content/1x/spider-verse_art_of_book_cover.jpg"
+                  alt="Spider-Man: Across the Spider-Verse" style="width: 100%; height: 100%; object-fit: cover;">
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">Spider-Man: Across the Spider-Verse</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Action</span>
+                  <span class="meta-item">2023</span>
+                </div>
+                <p class="movie-description">Miles Morales catapults across the Multiverse, where he encounters a team
+                  of Spider-People charged with protecting its very existence.</p>
+              </div>
+            </div>
+
+            <div class="movie-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1kP9pQuPhoDjfJ_jlZnRamnqscOJluUYd/preview', 'Dragon Ball Super: Super Hero', ['HD', 'Action', '2022'], 'Piccolo and Gohan face the ultimate Androids created by the New Red Ribbon Army.')">
+              <div class="movie-poster">
+                <iframe src="https://drive.google.com/file/d/1kP9pQuPhoDjfJ_jlZnRamnqscOJluUYd/preview"
+                  allow="autoplay"></iframe>
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">Dragon Ball Super: Super Hero</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Action</span>
+                  <span class="meta-item">2022</span>
+                </div>
+                <p class="movie-description">Piccolo and Gohan face the ultimate Androids created by the New Red Ribbon
+                  Army.</p>
+              </div>
+            </div>
+
+            <div class="movie-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1bcJ4X5WvyimpbB8U15Mb1j-kzct-nFIZ/preview', 'Venom: Let There Be Carnage', ['HD', 'Action', '2021'], 'Eddie Brock and Venom face their most lethal enemy yet - Carnage.')">
+              <div class="movie-poster">
+                <iframe src="https://drive.google.com/file/d/1bcJ4X5WvyimpbB8U15Mb1j-kzct-nFIZ/preview"
+                  allow="autoplay"></iframe>
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">Venom: Let There Be Carnage</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Action</span>
+                  <span class="meta-item">2021</span>
+                </div>
+                <p class="movie-description">Eddie Brock and Venom face their most lethal enemy yet - Carnage.</p>
+              </div>
+            </div>
+
+            <div class="movie-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1fhs1fdOWIKyHxC63m_n2VOSWI2-jYg01/preview', 'Sonic The Hedgehog 3', ['HD', 'Family', '2024'], 'Sonic, Knuckles and Tails battle Shadow, a mysterious new enemy with unmatched powers.')">
+              <div class="movie-poster">
+                <iframe src="https://drive.google.com/file/d/1fhs1fdOWIKyHxC63m_n2VOSWI2-jYg01/preview"
+                  allow="autoplay"></iframe>
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">Sonic The Hedgehog 3</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Family</span>
+                  <span class="meta-item">2024</span>
+                </div>
+                <p class="movie-description">Sonic, Knuckles and Tails battle Shadow, a mysterious new enemy with
+                  unmatched powers.</p>
+              </div>
+            </div>
+
+            <div class="movie-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1OsyF2LKJqjtv0b2Xd9GWOLcYkzny3VZo/preview', 'The Super Mario Bros. Movie', ['HD', 'Family', '2023'], 'Mario and Luigi are transported to the Mushroom Kingdom for an epic adventure.')">
+              <div class="movie-poster">
+                <img
+                  src="https://images-cdn.ubuy.co.id/660d70aaba3a0770be5567de-the-super-mario-bros-movie-mushroom.jpg"
+                  alt="The Super Mario Bros. Movie" style="width: 100%; height: 100%; object-fit: cover;">
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">The Super Mario Bros. Movie</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Family</span>
+                  <span class="meta-item">2023</span>
+                </div>
+                <p class="movie-description">Mario and Luigi are transported to the Mushroom Kingdom for an epic
+                  adventure.</p>
+              </div>
+            </div>
+
+            <div class="movie-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/10qrrGAoRN3D01A7cUkrNuDELSAayfgwq/preview', 'Dog Man', ['HD', 'Family', '2025'], 'A police officer and his dog are fused together to create the ultimate crime-fighting hero.')">
+              <div class="movie-poster">
+                <iframe src="https://drive.google.com/file/d/10qrrGAoRN3D01A7cUkrNuDELSAayfgwq/preview"
+                  allow="autoplay"></iframe>
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">Dog Man</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Family</span>
+                  <span class="meta-item">2025</span>
+                </div>
+                <p class="movie-description">A police officer and his dog are fused together to create the ultimate
+                  crime-fighting hero.</p>
+              </div>
+            </div>
+
+            <div class="movie-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1cVPQwz-8_TFyAv0Rsjk51cLND67FonFY/preview', 'Wonka', ['HD', 'Family', '2023'], 'The wondrous story of how Willy Wonka became the world\'s greatest chocolate-maker.')">
+              <div class="movie-poster">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQU-I2W56ND8a_uRu8WsOSFZ2be9ZV9AGe8lQ&s"
+                  alt="Wonka" style="width: 100%; height: 100%; object-fit: cover;">
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">Wonka</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Family</span>
+                  <span class="meta-item">2023</span>
+                </div>
+                <p class="movie-description">The wondrous story of how Willy Wonka became the world's greatest
+                  chocolate-maker.</p>
+              </div>
+            </div>
+
+            <div class="movie-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1v2xqKQcAvndfcqsctZH73NR2AjFXsrUr/preview', 'Space Jam: A New Legacy', ['HD', 'Family', '2021'], 'LeBron James teams up with the Looney Tunes to save his son from a digital world.')">
+              <div class="movie-poster">
+                <iframe src="https://drive.google.com/file/d/1v2xqKQcAvndfcqsctZH73NR2AjFXsrUr/preview"
+                  allow="autoplay"></iframe>
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">Space Jam: A New Legacy</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Family</span>
+                  <span class="meta-item">2021</span>
+                </div>
+                <p class="movie-description">LeBron James teams up with the Looney Tunes to save his son from a digital
+                  world.</p>
+              </div>
+            </div>
+
+            <div class="movie-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1QZNf2oysHR017fWLeCSoHRb1iKKdowMK/preview', 'Ghostbusters: Afterlife', ['HD', 'Comedy', '2021'], 'When a single mom and her two kids arrive in a small town, they begin to discover their connection to the original Ghostbusters and the secret legacy their grandfather left behind.')">
+              <div class="movie-poster">
+                <iframe src="https://drive.google.com/file/d/1QZNf2oysHR017fWLeCSoHRb1iKKdowMK/preview"
+                  allow="autoplay"></iframe>
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">Ghostbusters: Afterlife</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Comedy</span>
+                  <span class="meta-item">2021</span>
+                </div>
+                <p class="movie-description">When a single mom and her two kids arrive in a small town, they begin to
+                  discover their connection to the original Ghostbusters and the secret legacy their grandfather left
+                  behind.</p>
+              </div>
+            </div>
+
+            <div class="movie-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/15dfOHvAzq1Y-TCvqE6aJDC1IKVB7IAhK/preview', 'One Piece Stampede', ['HD', 'Action', '2019'], 'The Straw Hat Pirates join forces with other pirates at the Pirates Festival, but when Douglas Bullet escapes, chaos ensues.')">
+              <div class="movie-poster">
+                <iframe src="https://drive.google.com/file/d/15dfOHvAzq1Y-TCvqE6aJDC1IKVB7IAhK/preview"
+                  allow="autoplay"></iframe>
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">One Piece Stampede</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Action</span>
+                  <span class="meta-item">2019</span>
+                </div>
+                <p class="movie-description">The Straw Hat Pirates join forces with other pirates at the Pirates
+                  Festival, but when Douglas Bullet escapes, chaos ensues.</p>
+              </div>
+            </div>
+
+            <div class="movie-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1siki1wYP3LpfjFpUT8Z9lJuJzl7MdBhX/preview', 'Despicable Me 4', ['HD', 'Family', '2024'], 'Gru and Lucy and their girls welcome a new baby boy. When villain Maxime Le Mal escapes from prison, the family is forced to go on the run and into hiding.')">
+              <div class="movie-poster">
+                <iframe src="https://vidstream.to/watch-movie/watch-phineas-and-ferb-the-movie-across-the-2nd-dimension-10596/937216"
+                  allow="autoplay"></iframe>
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">Despicable Me 4</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Family</span>
+                  <span class="meta-item">2024</span>
+                </div>
+                <p class="movie-description">Gru and Lucy and their girls welcome a new baby boy. When villain Maxime Le
+                  Mal escapes from prison, the family is forced to go on the run and into hiding.</p>
+              </div>
+            </div>
+
+            <div class="movie-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1HC1FKq4RSF40cH9amVm4VkIbjohLoOiP/preview', 'Doctor Strange in the Multiverse of Madness', ['HD', 'Action', '2022'], 'Dr. Stephen Strange casts a forbidden spell that opens the doorway to the multiverse, including alternate versions of himself.')">
+              <div class="movie-poster">
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/en/thumb/1/17/Doctor_Strange_in_the_Multiverse_of_Madness_poster.jpg/250px-Doctor_Strange_in_the_Multiverse_of_Madness_poster.jpg"
+                  alt="Doctor Strange in the Multiverse of Madness"
+                  style="width: 100%; height: 100%; object-fit: cover;">
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">Doctor Strange in the Multiverse of Madness</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Action</span>
+                  <span class="meta-item">2022</span>
+                </div>
+                <p class="movie-description">Dr. Stephen Strange casts a forbidden spell that opens the doorway to the
+                  multiverse, including alternate versions of himself.</p>
+              </div>
+            </div>
+
+            <div class="movie-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1oddQM8w-8UqQIvB-fPpy1h-7xvAbklmA/preview', 'Spider-Man: No Way Home', ['HD', 'Action', '2021'], 'Peter Parker seeks Doctor Strange\'s help to make the world forget he is Spider-Man, but the spell goes wrong.')">
+              <div class="movie-poster">
+                <img src="https://m.media-amazon.com/images/I/81y0foYjoFL._UF894,1000_QL80_.jpg"
+                  alt="Spider-Man: No Way Home" style="width: 100%; height: 100%; object-fit: cover;">
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">Spider-Man: No Way Home</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Action</span>
+                  <span class="meta-item">2021</span>
+                </div>
+                <p class="movie-description">Peter Parker seeks Doctor Strange's help to make the world forget he is
+                  Spider-Man, but the spell goes wrong.</p>
+              </div>
+            </div>
+
+            <div class="movie-card"
+              onclick="openFullscreen('https://m.media-amazon.com/images/I/81y0foYjoFL._UF894,1000_QL80_.jpg', 'Venom: The Last Dance', ['HD', 'Action', '2024'], 'Eddie and Venom are on the run and face their most dangerous threat yet.')">
+              <div class="movie-poster">
+                <img src="https://upload.wikimedia.org/wikipedia/en/a/a3/Venom_The_Last_Dance_Poster.jpg"
+                  alt="Venom: The Last Dance" style="width: 100%; height: 100%; object-fit: cover;">
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">Venom: The Last Dance</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Action</span>
+                  <span class="meta-item">2024</span>
+                </div>
+                <p class="movie-description">Eddie and Venom are on the run and face their most dangerous threat yet.
+                </p>
+              </div>
+            </div>
+
+            <div class="movie-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1siTn1l8gYcgh3nbITJVAiCUZrDdQG-wD/preview', 'Henry Danger: The Movie', ['HD', 'Comedy', '2020'], 'Henry Hart and Captain Man team up for their biggest adventure yet in this action-packed movie.')">
+              <div class="movie-poster">
+                <img src="https://i.ebayimg.com/images/g/hHgAAOSwPN1n-Q0i/s-l1200.jpg" alt="Henry Danger: The Movie"
+                  style="width: 100%; height: 100%; object-fit: cover;">
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">Iron Man/h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Comedy</span>
+                  <span class="meta-item">2008</span>
+                </div>
+                <p class="movie-description">Iron man is a hero made out of a iron mech.</p>
+              </div>
+            </div>
+
+            <div class="movie-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1EiT5_VDJyMbrG5ezazVyzzOu1nWAkmE8/preview', 'Wicked', ['HD', 'Musical', '2024'], 'The untold story of the witches of Oz, starring Ariana Grande and Cynthia Erivo.')">
+              <div class="movie-poster">
+                <img src="https://upload.wikimedia.org/wikipedia/en/3/3c/Wicked_%282024_film%29_poster.png" alt="Wicked"
+                  style="width: 100%; height: 100%; object-fit: cover;">
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">Wicked</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Musical</span>
+                  <span class="meta-item">2024</span>
+                </div>
+                <p class="movie-description">The untold story of the witches of Oz, starring Ariana Grande and Cynthia
+                  Erivo.</p>
+              </div>
+            </div>
+
+            <div class="movie-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1kvdxs7jiV4VXsvGRM6MHU9GgQ1cnna5S/preview', 'Inside Out 2', ['HD', 'Family', '2024'], 'Riley is now a teenager and her emotions must navigate the complexities of adolescence.')">
+              <div class="movie-poster">
+                <iframe src="https://drive.google.com/file/d/1kvdxs7jiV4VXsvGRM6MHU9GgQ1cnna5S/preview"
+                  allow="autoplay"></iframe>
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">Inside Out 2</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Family</span>
+                  <span class="meta-item">2024</span>
+                </div>
+                <p class="movie-description">Riley is now a teenager and her emotions must navigate the complexities of
+                  adolescence.</p>
+              </div>
+            </div>
+
+            <div class="movie-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1bqXaAnYlzvDN8Ic21OTHu7mQ2eBsEBha/preview', 'Avengers: Endgame', ['HD', 'Action', '2019'], 'The Avengers assemble one final time to undo Thanos\' actions and restore balance to the universe.')">
+              <div class="movie-poster">
+                <img src="https://m.media-amazon.com/images/I/81rE8qRYvaL._UF894,1000_QL80_.jpg"
+                  alt="Avengers: Endgame" style="width: 100%; height: 100%; object-fit: cover;">
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">Avengers: Endgame</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Action</span>
+                  <span class="meta-item">2019</span>
+                </div>
+                <p class="movie-description">The Avengers assemble one final time to undo Thanos' actions and restore balance to the universe.</p>
+              </div>
+            </div>
+
+            <div class="movie-card"
+              onclick="openFullscreen('https://drive.google.com/file/d/1x0n_tZPq79HxAnV2ZwnVPTkBenFGZjx-/preview', 'Jurassic World Rebirth', ['HD', 'Action', '2025'], 'A new chapter in the Jurassic franchise with dinosaurs and adventure.')">
+              <div class="movie-poster">
+                <iframe src="https://drive.google.com/file/d/1x0n_tZPq79HxAnV2ZwnVPTkBenFGZjx-/preview"
+                  allow="autoplay"></iframe>
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">Jurassic World Rebirth</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Action</span>
+                  <span class="meta-item">2025</span>
+                </div>
+                <p class="movie-description">A new chapter in the Jurassic franchise with dinosaurs and adventure.</p>
+              </div>
+            </div>
+
+            <div class="movie-card"
+              onclick="openFullscreen('https://www.livereacting.com/tools/hls-player-embed?url=https%3A%2F%2Fmcflurry.plhjsbtlipsljifsrvct.xyz%2Fmovies%2Fd30468515b0f0d594858edd269ff4310%2Fplaylist.m3u8', 'Kpop Demon Hunters', ['HD', 'Action', '2024'], 'K-pop stars battle supernatural forces in this action-packed adventure combining music and demon hunting.')">
+              <div class="movie-poster">
+                <iframe src="https://www.livereacting.com/tools/hls-player-embed?url=https%3A%2F%2Fmcflurry.plhjsbtlipsljifsrvct.xyz%2Fmovies%2Fd30468515b0f0d594858edd269ff4310%2Fplaylist.m3u8" allow="autoplay"></iframe>
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">Kpop Demon Hunters</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Action</span>
+                  <span class="meta-item">2024</span>
+                </div>
+                <p class="movie-description">K-pop stars battle supernatural forces in this action-packed adventure combining music and demon hunting.</p>
+              </div>
+            </div>
+
+            <div class="movie-card"
+              onclick="openFullscreen('https://www.livereacting.com/tools/hls-player-embed?url=https%3A%2F%2Fmcflurry.plhjsbtlipsljifsrvct.xyz%2Fmovies%2F54a3996e8af394f7b9f3416c0d0476f4%2Fplaylist.m3u8', 'Lilo & Stitch', ['HD', 'Family', '2002'], 'A young Hawaiian girl adopts an unusual pet who is actually a notorious extra-terrestrial fugitive.')">
+              <div class="movie-poster">
+                <iframe src="https://www.livereacting.com/tools/hls-player-embed?url=https%3A%2F%2Fmcflurry.plhjsbtlipsljifsrvct.xyz%2Fmovies%2F54a3996e8af394f7b9f3416c0d0476f4%2Fplaylist.m3u8" allow="autoplay"></iframe>
+                <div class="play-overlay">
+                  <div class="play-icon"></div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">Lilo & Stitch</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Family</span>
+                  <span class="meta-item">2002</span>
+                </div>
+                <p class="movie-description">A young Hawaiian girl adopts an unusual pet who is actually a notorious extra-terrestrial fugitive.</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Series Section -->
+    <section class="section" id="series">
+      <h2 class="section-title">TV Series</h2>
+      <div class="series-row">
+        <div class="movies-container">
+          <div class="movies-grid">
+
+            <div class="series-card" onclick="toggleSeriesEpisodes('stranger-things')">
+              <div class="movie-poster">
+                <img src="https://www.coverwhiz.com/uploads/tv/stranger-things-season-3_v2.jpg" alt="Stranger Things"
+                  style="width: 100%; height: 100%; object-fit: cover;">
+                <div class="play-overlay">
+                  <div class="expand-icon">ðº</div>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">Stranger Things</h3>
+                <div class="movie-meta">
+                  <span class="meta-item">HD</span>
+                  <span class="meta-item">Sci-Fi</span>
+                  <span class="meta-item">4 Seasons</span>
+                </div>
+                <p class="movie-description">When a young boy vanishes, a small town uncovers a mystery involving secret
+                  experiments, terrifying supernatural forces and one strange little girl.</p>
+              </div>
+            </div>
+
+            <div class="episodes-container" id="stranger-things-episodes" style="display: none;">
+              <h3 class="episodes-title">Stranger Things - Season 1</h3>
+              <div class="episodes-grid">
+                <div class="episode-card"
+                  onclick="openFullscreen('https://drive.google.com/file/d/1VCyqtav08Y8xa-IYryXooITPMGDrEPDG/preview', 'Stranger Things - S1E1: The Vanishing of Will Byers', ['HD', 'Sci-Fi', 'S1E1'], 'On his way home from a friend\'s house, young Will sees something terrifying. Nearby, a sinister secret lurks in the depths of a government lab.')">
+                  <div class="episode-poster">
+                    <iframe src="https://drive.google.com/file/d/1VCyqtav08Y8xa-IYryXooITPMGDrEPDG/preview"
+                      allow="autoplay"></iframe>
+                    <div class="play-overlay">
+                      <div class="play-icon"></div>
+                    </div>
+                  </div>
+                  <div class="episode-info">
+                    <h4 class="episode-title">S1E1: The Vanishing of Will Byers</h4>
+                    <div class="episode-meta">
+                      <span class="meta-item">47 min</span>
+                      <span class="meta-item">HD</span>
+                    </div>
+                    <p class="episode-description">On his way home from a friend's house, young Will sees something
+                      terrifying. Nearby, a sinister secret lurks in the depths of a government lab.</p>
+                  </div>
+                </div>
+
+                <div class="episode-card"
+                  onclick="openFullscreen('https://drive.google.com/file/d/1pLUgoA_cXuhmWoqHPfa_KsUK1WCb3hqR/preview', 'Stranger Things - S1E2: The Weirdo on Maple Street', ['HD', 'Sci-Fi', 'S1E2'], 'Lucas, Mike and Dustin try to talk to the girl they found in the woods. Hopper questions an anxious Joyce about an unsettling phone call.')">
+                  <div class="episode-poster">
+                    <iframe src="https://drive.google.com/file/d/1pLUgoA_cXuhmWoqHPfa_KsUK1WCb3hqR/preview"
+                      allow="autoplay"></iframe>
+                    <div class="play-overlay">
+                      <div class="play-icon"></div>
+                    </div>
+                  </div>
+                  <div class="episode-info">
+                    <h4 class="episode-title">S1E2: The Weirdo on Maple Street</h4>
+                    <div class="episode-meta">
+                      <span class="meta-item">55 min</span>
+                      <span class="meta-item">HD</span>
+                    </div>
+                    <p class="episode-description">Lucas, Mike and Dustin try to talk to the girl they found in the
+                      woods. Hopper questions an anxious Joyce about an unsettling phone call.</p>
+                  </div>
+                </div>
+
+                <div class="episode-card"
+                  onclick="openFullscreen('https://drive.google.com/file/d/1q3G03yf98kKDrJyMeD8c-qVMyTwR489P/preview', 'Stranger Things - S1E3: Holly, Jolly', ['HD', 'Sci-Fi', 'S1E3'], 'Increasingly concerned about her son\'s disappearance, Joyce brings her concerns to Hopper and the sheriff\'s department.')">
+                  <div class="episode-poster">
+                    <iframe src="https://drive.google.com/file/d/1q3G03yf98kKDrJyMeD8c-qVMyTwR489P/preview"
+                      allow="autoplay"></iframe>
+                    <div class="play-overlay">
+                      <div class="play-icon"></div>
+                    </div>
+                  </div>
+                  <div class="episode-info">
+                    <h4 class="episode-title">S1E3: Holly, Jolly</h4>
+                    <div class="episode-meta">
+                      <span class="meta-item">51 min</span>
+                      <span class="meta-item">HD</span>
+                    </div>
+                    <p class="episode-description">Increasingly concerned about her son's disappearance, Joyce brings
+                      her concerns to Hopper and the sheriff's department.</p>
+                  </div>
+                </div>
+
+                <div class="episode-card"
+                  onclick="openFullscreen('https://drive.google.com/file/d/1msdoIy6vPZfP4bBLX8w7jIJczGwhzlmW/preview', 'Stranger Things - S1E4: The Body', ['HD', 'Sci-Fi', 'S1E4'], 'Hopper discovers a startling truth while searching for Will. Joyce and the kids make a devastating discovery.')">
+                  <div class="episode-poster">
+                    <iframe src="https://drive.google.com/file/d/1msdoIy6vPZfP4bBLX8w7jIJczGwhzlmW/preview"
+                      allow="autoplay"></iframe>
+                    <div class="play-overlay">
+                      <div class="play-icon"></div>
+                    </div>
+                  </div>
+                  <div class="episode-info">
+                    <h4 class="episode-title">S1E4: The Body</h4>
+                    <div class="episode-meta">
+                      <span class="meta-item">58 min</span>
+                      <span class="meta-item">HD</span>
+                    </div>
+                    <p class="episode-description">Hopper discovers a startling truth while searching for Will. Joyce
+                      and the kids make a devastating discovery.</p>
+                  </div>
+                </div>
+
+                <div class="episode-card"
+                  onclick="openFullscreen('https://drive.google.com/file/d/1deCnzmYs7aRt48PaNtbJaDryA5h4NA5a/preview', 'Stranger Things - S1E5: Chapter Five: The Flea and the Acrobat', ['HD', 'Sci-Fi', 'S1E5'], 'Hopper and Joyce uncover the truth about the lab\'s experiments. The kids use their knowledge to help save Will.')">
+                  <div class="episode-poster">
+                    <iframe src="https://drive.google.com/file/d/1deCnzmYs7aRt48PaNtbJaDryA5h4NA5a/preview"
+                      allow="autoplay"></iframe>
+                    <div class="play-overlay">
+                      <div class="play-icon"></div>
+                    </div>
+                  </div>
+                  <div class="episode-info">
+                    <h4 class="episode-title">S1E5: Chapter Five: The Flea and the Acrobat</h4>
+                    <div class="episode-meta">
+                      <span class="meta-item">52 min</span>
+                      <span class="meta-item">HD</span>
+                    </div>
+                    <p class="episode-description">Hopper and Joyce uncover the truth about the lab's experiments. The
+                      kids use their knowledge to help save Will.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Music Player Section -->
+    <section class="section" id="music">
+      <h2 class="section-title">Music & Soundtracks</h2>
+      <div class="music-row">
+        <div class="music-container">
+          <div class="music-grid">
+
+            <div class="music-card">
+              <div class="music-info">
+                <h3 class="music-title">Movie Soundtracks</h3>
+                <p class="music-description">Epic soundtracks from your favorite blockbuster movies</p>
+              </div>
+              <div class="spotify-embed">
+                <iframe style="border-radius:12px" 
+                  src="https://open.spotify.com/embed/playlist/5iwkYfnHAGMEFLiHFFGnP4?utm_source=generator&theme=0" 
+                  width="100%" height="352" frameBorder="0" allowfullscreen="" 
+                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+                  loading="lazy"></iframe>
+              </div>
+            </div>
+
+            <div class="music-card">
+              <div class="music-info">
+                <h3 class="music-title">Action Movie Hits</h3>
+                <p class="music-description">High-energy tracks perfect for action sequences</p>
+              </div>
+              <div class="spotify-embed">
+                <iframe style="border-radius:12px" 
+                  src="https://open.spotify.com/embed/playlist/37i9dQZF1DX0XUsuxWHRQd?utm_source=generator&theme=0" 
+                  width="100%" height="352" frameBorder="0" allowfullscreen="" 
+                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+                  loading="lazy"></iframe>
+              </div>
+            </div>
+
+            <div class="music-card">
+              <div class="music-info">
+                <h3 class="music-title">Marvel Universe</h3>
+                <p class="music-description">Heroic themes from the Marvel Cinematic Universe</p>
+              </div>
+              <div class="spotify-embed">
+                <iframe style="border-radius:12px" 
+                  src="https://open.spotify.com/embed/playlist/37i9dQZF1DX3LyU0mhWnOM?utm_source=generator&theme=0" 
+                  width="100%" height="352" frameBorder="0" allowfullscreen="" 
+                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+                  loading="lazy"></iframe>
+              </div>
+            </div>
+
+            <div class="music-card">
+              <div class="music-info">
+                <h3 class="music-title">Animated Movie Magic</h3>
+                <p class="music-description">Magical soundtracks from beloved animated films</p>
+              </div>
+              <div class="spotify-embed">
+                <iframe style="border-radius:12px" 
+                  src="https://open.spotify.com/embed/playlist/37i9dQZF1DWSJHnPb1f0X3?utm_source=generator&theme=0" 
+                  width="100%" height="352" frameBorder="0" allowfullscreen="" 
+                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+                  loading="lazy"></iframe>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Calendar Section -->
+    <section class="section" id="calendar">
+
+    </section>
+    </div>
+  </div>
+
+  <!-- Settings Content -->
+  <div class="settings-content" id="settingsContent">
+    <div class="settings-grid">
+      
+      <!-- Profile Management Card -->
+      <div class="settings-card">
+        <h3 class="settings-card-title">Profile Management</h3>
+        
+        <div class="setting-item profile-section">
+          <div class="profile-preview">
+            <img id="settingsProfilePic" src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png"
+              alt="Current Profile" class="profile-preview-img">
+            <div class="profile-info">
+              <div class="profile-name" id="settingsProfileName">Guest</div>
+              <div class="profile-email" id="settingsProfileEmail">Guest@streamx.com</div>
+            </div>
+          </div>
+          <button class="profile-edit-btn" onclick="editProfile()">Edit Profile</button>
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">Username</div>
+            <div class="setting-description">Your display name</div>
+          </div>
+          <input type="text" class="setting-input" placeholder="Enter username" id="settingsUsernameInput"
+            onchange="updateUsername(this.value)">
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">Profile Picture</div>
+            <div class="setting-description">Choose from available avatars</div>
+          </div>
+          <div class="avatar-selector">
+            <div class="avatar-option"
+              onclick="selectAvatar('https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png')">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png" alt="Avatar 1">
+            </div>
+            <div class="avatar-option" onclick="selectAvatar('https://i.pravatar.cc/150?img=1')">
+              <img src="https://i.pravatar.cc/150?img=1" alt="Avatar 2">
+            </div>
+            <div class="avatar-option" onclick="selectAvatar('https://i.pravatar.cc/150?img=2')">
+              <img src="https://i.pravatar.cc/150?img=2" alt="Avatar 3">
+            </div>
+            <div class="avatar-option" onclick="selectAvatar('https://i.pravatar.cc/150?img=3')">
+              <img src="https://i.pravatar.cc/150?img=3" alt="Avatar 4">
+            </div>
+            <div class="avatar-option" onclick="selectAvatar('https://i.pravatar.cc/150?img=4')">
+              <img src="https://i.pravatar.cc/150?img=4" alt="Avatar 5">
+            </div>
+            <div class="avatar-option" onclick="selectAvatar('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ10LA5K2JxuZX_lH-TSisjsGp68_CAZ29wyA&s')">
+              <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ10LA5K2JxuZX_lH-TSisjsGp68_CAZ29wyA&s" alt="Avatar 6">
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">Upload Profile Picture</div>
+            <div class="setting-description">Upload your own image file</div>
+          </div>
+          <input type="file" accept="image/*" class="setting-input" id="settingsAvatarUpload" onchange="uploadAvatar(this)"
+            style="padding: 8px;">
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">Custom Avatar URL</div>
+            <div class="setting-description">Enter a custom image URL</div>
+          </div>
+          <input type="url" class="setting-input" placeholder="https://example.com/avatar.jpg" id="settingsCustomAvatarInput"
+            onchange="selectAvatar(this.value)">
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">Theme Color</div>
+            <div class="setting-description">Personalize your accent color</div>
+          </div>
+          <div class="color-selector">
+            <div class="color-option" data-color="#e50914" onclick="selectThemeColor('#e50914')"
+              style="background: #e50914;"></div>
+            <div class="color-option" data-color="#ff6b35" onclick="selectThemeColor('#ff6b35')"
+              style="background: #ff6b35;"></div>
+            <div class="color-option" data-color="#4CAF50" onclick="selectThemeColor('#4CAF50')"
+              style="background: #4CAF50;"></div>
+            <div class="color-option" data-color="#2196F3" onclick="selectThemeColor('#2196F3')"
+              style="background: #2196F3;"></div>
+            <div class="color-option" data-color="#9C27B0" onclick="selectThemeColor('#9C27B0')"
+              style="background: #9C27B0;"></div>
+            <div class="color-option" data-color="#FF9800" onclick="selectThemeColor('#FF9800')"
+              style="background: #FF9800;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Display Settings Card -->
+      <div class="settings-card">
+        <h3 class="settings-card-title">Display Settings</h3>
+
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">Auto-play previews</div>
+            <div class="setting-description">Automatically play movie previews when hovering</div>
+          </div>
+          <div class="toggle-switch active" onclick="toggleSetting(this, 'autoplay')" id="settingsAutoplayToggle">
+            <div class="toggle-slider"></div>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">Theme</div>
+            <div class="setting-description">Choose your preferred theme</div>
+          </div>
+          <select class="setting-select" onchange="changeTheme(this.value)" id="settingsThemeSelect">
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+            <option value="auto">Auto</option>
+          </select>
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">Animation speed</div>
+            <div class="setting-description">Control interface animation speed</div>
+          </div>
+          <input type="range" min="0.5" max="2" step="0.1" value="1" class="setting-slider"
+            onchange="changeAnimationSpeed(this.value)" id="settingsAnimationSlider">
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">Show descriptions</div>
+            <div class="setting-description">Display movie descriptions on cards</div>
+          </div>
+          <div class="toggle-switch active" onclick="toggleSetting(this, 'descriptions')" id="settingsDescriptionsToggle">
+            <div class="toggle-slider"></div>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">Grid size</div>
+            <div class="setting-description">Number of movies per row</div>
+          </div>
+          <select class="setting-select" onchange="changeGridSize(this.value)" id="settingsGridSelect">
+            <option value="small">Small (6 per row)</option>
+            <option value="medium" selected>Medium (4 per row)</option>
+            <option value="large">Large (3 per row)</option>
+          </select>
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">Smooth scrolling</div>
+            <div class="setting-description">Enable smooth scrolling animations</div>
+          </div>
+          <div class="toggle-switch active" onclick="toggleSetting(this, 'smoothscroll')" id="settingsSmoothscrollToggle">
+            <div class="toggle-slider"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Video Settings Card -->
+      <div class="settings-card">
+        <h3 class="settings-card-title">Video Settings</h3>
+
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">Default quality</div>
+            <div class="setting-description">Set preferred video quality</div>
+          </div>
+          <select class="setting-select" onchange="changeQuality(this.value)" id="settingsQualitySelect">
+            <option value="auto">Auto</option>
+            <option value="hd" selected>HD</option>
+            <option value="sd">SD</option>
+          </select>
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">Auto-fullscreen</div>
+            <div class="setting-description">Enter fullscreen mode when playing movies</div>
+          </div>
+          <div class="toggle-switch" onclick="toggleSetting(this, 'autofullscreen')" id="settingsAutofullscreenToggle">
+            <div class="toggle-slider"></div>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">Volume</div>
+            <div class="setting-description">Default volume level</div>
+          </div>
+          <input type="range" min="0" max="100" step="5" value="80" class="setting-slider"
+            onchange="changeVolume(this.value)" id="settingsVolumeSlider">
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom Navigation Bar -->
+  <div class="bottom-nav" id="bottomNav">
+    <div class="nav-item active" onclick="showHome()">
+      <div class="nav-icon">🏠</div>
+      <span class="nav-label">HOME</span>
+    </div>
+    <div class="nav-item" onclick="showSettings()">
+      <div class="nav-icon">⚙️</div>
+      <span class="nav-label">SETTINGS</span>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <p class="footer-copy">&copy; 2025 StreamX Premium streaming experience. All rights belong to their respective
+        owners.</p>
+    </div>
+  </footer>
+
+  <!-- Settings Panel -->
+  <div id="settingsOverlay" class="settings-overlay" onclick="closeSettings()"></div>
+  <div id="settingsPanel" class="settings-panel">
+    <div class="settings-header">
+      <h2 class="settings-title">Settings</h2>
+      <button class="settings-close" onclick="closeSettings()">Esc</button>
+    </div>
+
+    <div class="settings-section">
+      <h3 class="settings-section-title">Display</h3>
+
+      <div class="setting-item">
+        <div>
+          <div class="setting-label">Auto-play previews</div>
+          <div class="setting-description">Automatically play movie previews when hovering</div>
+        </div>
+        <div class="toggle-switch active" onclick="toggleSetting(this, 'autoplay')" id="autoplayToggle">
+          <div class="toggle-slider"></div>
+        </div>
+      </div>
+
+      <div class="setting-item">
+        <div>
+          <div class="setting-label">Theme</div>
+          <div class="setting-description">Choose your preferred theme</div>
+        </div>
+        <select class="setting-select" onchange="changeTheme(this.value)" id="themeSelect">
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+          <option value="auto">Auto</option>
+        </select>
+      </div>
+
+      <div class="setting-item">
+        <div>
+          <div class="setting-label">Animation speed</div>
+          <div class="setting-description">Control interface animation speed</div>
+        </div>
+        <input type="range" min="0.5" max="2" step="0.1" value="1" class="setting-slider"
+          onchange="changeAnimationSpeed(this.value)" id="animationSlider">
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3 class="settings-section-title">Video</h3>
+
+      <div class="setting-item">
+        <div>
+          <div class="setting-label">Default quality</div>
+          <```text div class="setting-description">Set preferred video quality
+        </div>
+      </div>
+      <select class="setting-select" onchange="changeQuality(this.value)" id="qualitySelect">
+        <option value="auto">Auto</option>
+        <option value="hd" selected>HD</option>
+        <option value="sd">SD</option>
+      </select>
+    </div>
+
+    <div class="setting-item">
+      <div>
+        <div class="setting-label">Auto-fullscreen</div>
+        <div class="setting-description">Enter fullscreen mode when playing movies</div>
+      </div>
+      <div class="toggle-switch" onclick="toggleSetting(this, 'autofullscreen')" id="autofullscreenToggle">
+        <div class="toggle-slider"></div>
+      </div>
+    </div>
+
+    <div class="setting-item">
+      <div>
+        <div class="setting-label">Volume</div>
+        <div class="setting-description">Default volume level</div>
+      </div>
+      <input type="range" min="0" max="100" step="5" value="80" class="setting-slider"
+        onchange="changeVolume(this.value)" id="volumeSlider">
+    </div>
+  </div>
+
+  
+
+  <div class="settings-section">
+    <h3 class="settings-section-title">Interface</h3>
+
+    <div class="setting-item">
+      <div>
+        <div class="setting-label">Show descriptions</div>
+        <div class="setting-description">Display movie descriptions on cards</div>
+      </div>
+      <div class="toggle-switch active" onclick="toggleSetting(this, 'descriptions')" id="descriptionsToggle">
+        <div class="toggle-slider"></div>
+      </div>
+    </div>
+
+    <div class="setting-item">
+      <div>
+        <div class="setting-label">Grid size</div>
+        <div class="setting-description">Number of movies per row</div>
+      </div>
+      <select class="setting-select" onchange="changeGridSize(this.value)" id="gridSelect">
+        <option value="small">Small (6 per row)</option>
+        <option value="medium" selected>Medium (4 per row)</option>
+        <option value="large">Large (3 per row)</option>
+      </select>
+    </div>
+
+    <div class="setting-item">
+      <div>
+        <div class="setting-label">Smooth scrolling</div>
+        <div class="setting-description">Enable smooth scrolling animations</div>
+      </div>
+      <div class="toggle-switch active" onclick="toggleSetting(this, 'smoothscroll')" id="smoothscrollToggle">
+        <div class="toggle-slider"></div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- Movie Details Modal -->
+  <div id="movieDetailsModal" class="movie-details-modal">
+    <div class="modal-content">
+      <div class="modal-close" onclick="closeMovieDetails()">✕</div>
+      <div class="movie-details-content">
+        <div class="movie-poster-large">
+          <img id="detailsPoster" src="" alt="Movie Poster">
+        </div>
+        <div class="movie-details-info">
+          <h2 id="detailsTitle"></h2>
+          <div class="details-meta" id="detailsMeta"></div>
+          <p id="detailsDescription"></p>
+          <div class="movie-actions">
+            <button class="action-btn play-btn" onclick="playFromDetails()">▶ Play Now</button>
+            <button class="action-btn info-btn" onclick="toggleWatchlist()">+ Watchlist</button>
+            <button class="action-btn share-btn" onclick="shareMovie()">📤 Share</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Modal -->
+  <div id="fullscreenModal" class="fullscreen-modal">
+    <div class="fullscreen-content">
+      <div class="player-controls">
+        <h2 class="player-title" id="playerTitle">Movie Title</h2>
+        <div class="player-buttons">
+          <button class="player-btn" onclick="refreshPlayer()">
+            ð Refresh
+          </button>
+          <button class="player-btn" onclick="toggleBrowserFullscreen()" id="fullscreenBtn">
+            â¶ Fullscreen
+          </button>
+          <button class="close-fullscreen" onclick="closeFullscreen()">
+            â Close
+          </button>
+        </div>
+      </div>
+      <div class="loading-spinner" id="loadingSpinner"></div>
+      <iframe id="fullscreenVideo" src="" allow="autoplay"></iframe>
+      <div class="fullscreen-overlay">
+        <div class="movie-details">
+          <div class="movie-info-overlay">
+            <div class="movie-meta-overlay" id="playerMeta">
+              <span class="meta-tag">HD</span>
+              <span class="meta-tag">2024</span>
+            </div>
+            <p class="movie-description-overlay" id="playerDescription">Movie description will appear here...</p>
+          </div>
+          <div class="quality-indicator">
+            <div class="quality-dot"></div>
+            Streaming in HD
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Header scroll effect
+    window.addEventListener('scroll', function () {
+      const header = document.getElementById('header');
+      if (window.scrollY > 50) {
+        header.classList.add('scrolled');
+      } else {
+        header.classList.remove('scrolled');
+      }
+    });
+
+    function openFullscreen(videoSrc, movieTitle = 'Movie', movieMeta = [], movieDesc = 'Movie description') {
+      const modal = document.getElementById('fullscreenModal');
+      const video = document.getElementById('fullscreenVideo');
+      const title = document.getElementById('playerTitle');
+      const meta = document.getElementById('playerMeta');
+      const description = document.getElementById('playerDescription');
+      const spinner = document.getElementById('loadingSpinner');
+
+      // Set movie details
+      title.textContent = movieTitle;
+      description.textContent = movieDesc;
+
+      // Clear and set meta tags
+      meta.innerHTML = '';
+      movieMeta.forEach(tag => {
+        const metaSpan = document.createElement('span');
+        metaSpan.className = 'meta-tag';
+        metaSpan.textContent = tag;
+        meta.appendChild(metaSpan);
+      });
+
+      // Show loading spinner
+      spinner.style.display = 'block';
+
+      // Set video source and show modal
+      video.src = videoSrc;
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+
+      // Add keyboard shortcuts
+      document.addEventListener('keydown', handleKeyboard);
+    }
+
+    function closeFullscreen() {
+      const modal = document.getElementById('fullscreenModal');
+      const video = document.getElementById('fullscreenVideo');
+      const spinner = document.getElementById('loadingSpinner');
+
+      modal.classList.remove('active');
+      setTimeout(() => {
+        video.src = '';
+        spinner.style.display = 'none';
+      }, 400);
+      document.body.style.overflow = 'auto';
+
+      // Remove keyboard shortcuts
+      document.removeEventListener('keydown', handleKeyboard);
+    }
+
+    function refreshPlayer() {
+      const video = document.getElementById('fullscreenVideo');
+      const spinner = document.getElementById('loadingSpinner');
+      const currentSrc = video.src;
+
+      spinner.style.display = 'block';
+      video.src = '';
+      setTimeout(() => {
+        video.src = currentSrc;
+      }, 100);
+    }
+
+    function hideLoading() {
+      const spinner = document.getElementById('loadingSpinner');
+      setTimeout(() => {
+        spinner.style.display = 'none';
+      }, 1000);
+    }
+
+    // Handle iframe loading
+    document.getElementById('fullscreenVideo').addEventListener('load', hideLoading);
+
+    let fullscreenHoverTimeout;
+
+    function toggleBrowserFullscreen() {
+      const fullscreenBtn = document.getElementById('fullscreenBtn');
+      const modal = document.getElementById('fullscreenModal');
+
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().then(() => {
+          fullscreenBtn.innerHTML = 'â¶ Exit Fullscreen';
+          modal.classList.add('browser-fullscreen');
+          setupFullscreenHover();
+        }).catch(err => {
+          console.log('Error attempting to enable fullscreen:', err);
+        });
+      } else {
+        document.exitFullscreen().then(() => {
+          fullscreenBtn.innerHTML = 'â¶ Fullscreen';
+          modal.classList.remove('browser-fullscreen');
+          removeFullscreenHover();
+        });
+      }
+    }
+
+    function setupFullscreenHover() {
+      const modal = document.getElementById('fullscreenModal');
+      const controls = document.querySelector('.player-controls');
+      const overlay = document.querySelector('.fullscreen-overlay');
+
+      modal.addEventListener('mousemove', showControlsTemporarily);
+      modal.addEventListener('mouseleave', hideControlsImmediately);
+    }
+
+    function removeFullscreenHover() {
+      const modal = document.getElementById('fullscreenModal');
+      modal.removeEventListener('mousemove', showControlsTemporarily);
+      modal.removeEventListener('mouseleave', hideControlsImmediately);
+    }
+
+    function showControlsTemporarily() {
+      if (!document.fullscreenElement) return;
+
+      const controls = document.querySelector('.player-controls');
+      const overlay = document.querySelector('.fullscreen-overlay');
+
+      controls.style.display = 'flex';
+      overlay.style.display = 'block';
+
+      clearTimeout(fullscreenHoverTimeout);
+      fullscreenHoverTimeout = setTimeout(() => {
+        controls.style.display = 'none';
+        overlay.style.display = 'none';
+      }, 3000);
+    }
+
+    function hideControlsImmediately() {
+      if (!document.fullscreenElement) return;
+
+      clearTimeout(fullscreenHoverTimeout);
+      const controls = document.querySelector('.player-controls');
+      const overlay = document.querySelector('.fullscreen-overlay');
+
+      controls.style.display = 'none';
+      overlay.style.display = 'none';
+    }
+
+    // Listen for fullscreen changes to update button text and modal styling
+    document.addEventListener('fullscreenchange', function () {
+      const fullscreenBtn = document.getElementById('fullscreenBtn');
+      const modal = document.getElementById('fullscreenModal');
+
+      if (fullscreenBtn) {
+        if (document.fullscreenElement) {
+          fullscreenBtn.innerHTML = 'â¶ Exit Fullscreen';
+          modal.classList.add('browser-fullscreen');
+          setupFullscreenHover();
+        } else {
+          fullscreenBtn.innerHTML = 'â¶ Fullscreen';
+          modal.classList.remove('browser-fullscreen');
+          removeFullscreenHover();
+        }
+      }
+    });
+
+    function handleKeyboard(e) {
+      if (e.key === 'Escape') {
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        } else {
+          closeFullscreen();
+        }
+      } else if (e.key === 'r' || e.key === 'R') {
+        refreshPlayer();
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleBrowserFullscreen();
+      }
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('fullscreenModal').addEventListener('click', function (e) {
+      if (e.target === this) {
+        closeFullscreen();
+      }
+    });
+
+    // Smooth scrolling for navigation links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const targetId = this.getAttribute('href');
+        if (targetId && targetId !== '#' && targetId.length > 1) {
+          const target = document.querySelector(targetId);
+          if (target) {
+            target.scrollIntoView({
+              behavior: 'smooth'
+            });
+          }
+        }
+      });
+    });
+
+    // Enhanced Movie Details Modal
+    let currentMovieData = {};
+
+    function showMovieDetails(title, meta, description, poster) {
+      currentMovieData = { title, meta, description, poster };
+      
+      const modal = document.getElementById('movieDetailsModal');
+      const detailsTitle = document.getElementById('detailsTitle');
+      const detailsMeta = document.getElementById('detailsMeta');
+      const detailsDescription = document.getElementById('detailsDescription');
+      const detailsPoster = document.getElementById('detailsPoster');
+
+      detailsTitle.textContent = title;
+      detailsDescription.textContent = description;
+      detailsPoster.src = poster;
+      detailsPoster.alt = title;
+
+      // Clear and set meta tags
+      detailsMeta.innerHTML = '';
+      meta.forEach(tag => {
+        const metaSpan = document.createElement('span');
+        metaSpan.className = 'meta-tag';
+        metaSpan.textContent = tag;
+        detailsMeta.appendChild(metaSpan);
+      });
+
+      // Add rating stars
+      const ratingContainer = document.createElement('div');
+      ratingContainer.className = 'rating-container';
+      const stars = document.createElement('div');
+      stars.className = 'stars';
+      const rating = Math.floor(Math.random() * 2) + 4; // Random rating 4-5 stars
+      
+      for (let i = 1; i <= 5; i++) {
+        const star = document.createElement('span');
+        star.className = 'star';
+        star.textContent = i <= rating ? '★' : '☆';
+        stars.appendChild(star);
+      }
+      
+      const ratingText = document.createElement('span');
+      ratingText.className = 'rating-text';
+      ratingText.textContent = `${rating}/5`;
+      
+      ratingContainer.appendChild(stars);
+      ratingContainer.appendChild(ratingText);
+      detailsMeta.appendChild(ratingContainer);
+
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMovieDetails() {
+      const modal = document.getElementById('movieDetailsModal');
+      modal.classList.remove('active');
+      document.body.style.overflow = 'auto';
+    }
+
+    function playFromDetails() {
+      closeMovieDetails();
+      // This would use the stored movie data to play the movie
+      // Implementation depends on how movies are stored/accessed
+    }
+
+    function toggleWatchlist() {
+      const btn = event.target;
+      if (btn.textContent.includes('+')) {
+        btn.textContent = '✓ In Watchlist';
+        btn.style.background = 'linear-gradient(135deg, #4CAF50, #45a049)';
+      } else {
+        btn.textContent = '+ Watchlist';
+        btn.style.background = 'rgba(255, 255, 255, 0.1)';
+      }
+    }
+
+    function shareMovie() {
+      if (navigator.share) {
+        navigator.share({
+          title: currentMovieData.title,
+          text: currentMovieData.description,
+          url: window.location.href
+        });
+      } else {
+        // Fallback for browsers that don't support Web Share API
+        const shareText = `Check out "${currentMovieData.title}" - ${currentMovieData.description}`;
+        navigator.clipboard.writeText(shareText).then(() => {
+          alert('Movie details copied to clipboard!');
+        });
+      }
+    }
+
+    // View Toggle Functionality
+    function switchView(viewType) {
+      const gridViewBtn = document.getElementById('gridViewBtn');
+      const listViewBtn = document.getElementById('listViewBtn');
+      const moviesGrid = document.querySelector('.movies-grid');
+
+      if (viewType === 'grid') {
+        gridViewBtn.classList.add('active');
+        listViewBtn.classList.remove('active');
+        moviesGrid.classList.remove('list-view');
+      } else {
+        listViewBtn.classList.add('active');
+        gridViewBtn.classList.remove('active');
+        moviesGrid.classList.add('list-view');
+      }
+    }
+
+    // Enhanced Filter Functionality
+    function filterMovies() {
+      const genreFilter = document.getElementById('genreFilter').value.toLowerCase();
+      const movieCards = document.querySelectorAll('.movie-card');
+      const trendingCards = document.querySelectorAll('.trending-card');
+
+      movieCards.forEach(card => {
+        const genre = card.dataset.genre || '';
+        const metaItems = card.querySelectorAll('.meta-item');
+        let hasGenre = false;
+
+        if (!genreFilter) {
+          hasGenre = true;
+        } else {
+          // Check data-genre attribute
+          if (genre.toLowerCase().includes(genreFilter)) {
+            hasGenre = true;
+          }
+          
+          // Check meta items
+          metaItems.forEach(item => {
+            if (item.textContent.toLowerCase().includes(genreFilter)) {
+              hasGenre = true;
+            }
+          });
+        }
+
+        card.style.display = hasGenre ? 'block' : 'none';
+      });
+
+      // Filter trending cards similarly
+      trendingCards.forEach(card => {
+        if (!genreFilter) {
+          card.style.display = 'block';
+          return;
+        }
+
+        const img = card.querySelector('img');
+        const altText = img ? img.alt.toLowerCase() : '';
+        
+        if (altText.includes('action') && genreFilter === 'action' ||
+            altText.includes('comedy') && genreFilter === 'comedy' ||
+            altText.includes('family') && genreFilter === 'family' ||
+            altText.includes('adventure') && genreFilter === 'adventure' ||
+            altText.includes('sci-fi') && genreFilter === 'sci-fi') {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    // Close movie details modal when clicking outside
+    document.getElementById('movieDetailsModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeMovieDetails();
+      }
+    });
+
+    // Keyboard shortcuts for movie details modal
+    document.addEventListener('keydown', function(e) {
+      const modal = document.getElementById('movieDetailsModal');
+      if (modal.classList.contains('active')) {
+        if (e.key === 'Escape') {
+          closeMovieDetails();
+        } else if (e.key === 'Enter' || e.key === ' ') {
+          playFromDetails();
+        }
+      }
+    });
+
+    // Search functionality
+    function searchMovies() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const movieCards = document.querySelectorAll('.movie-card');
+      const trendingCards = document.querySelectorAll('.trending-card');
+
+      movieCards.forEach(card => {
+        const title = card.querySelector('.movie-title').textContent.toLowerCase();
+        const description = card.querySelector('.movie-description').textContent.toLowerCase();
+
+        if (title.includes(searchTerm) || description.includes(searchTerm)) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = searchTerm === '' ? 'block' : 'none';
+        }
+      });
+
+      trendingCards.forEach(card => {
+        const img = card.querySelector('img');
+        const altText = img ? img.alt.toLowerCase() : '';
+
+        if (altText.includes(searchTerm)) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = searchTerm === '' ? 'block' : 'none';
+        }
+      });
+    }
+
+    // Search on Enter key
+    document.getElementById('searchInput').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        searchMovies();
+      }
+    });
+
+    // Real-time search and filter combination
+    document.getElementById('searchInput').addEventListener('input', function() {
+      searchMovies();
+      filterMovies();
+    });
+
+    // Add genre data attributes to existing movie cards for better filtering
+    function initializeGenreData() {
+      const movieCards = document.querySelectorAll('.movie-card');
+      movieCards.forEach(card => {
+        const metaItems = card.querySelectorAll('.meta-item');
+        metaItems.forEach(item => {
+          const text = item.textContent.toLowerCase();
+          if (!card.dataset.genre) {
+            if (text.includes('action')) card.dataset.genre = 'action';
+            else if (text.includes('comedy')) card.dataset.genre = 'comedy';
+            else if (text.includes('family')) card.dataset.genre = 'family';
+            else if (text.includes('adventure')) card.dataset.genre = 'adventure';
+            else if (text.includes('sci-fi')) card.dataset.genre = 'sci-fi';
+            else if (text.includes('musical')) card.dataset.genre = 'musical';
+          }
+        });
+      });
+    }
+
+    // Initialize genre data when page loads
+    window.addEventListener('load', function() {
+      initializeGenreData();
+    });
+
+    // Settings functionality
+    let settings = {
+      autoplay: true,
+      theme: 'dark',
+      animationSpeed: 1,
+      quality: 'hd',
+      autofullscreen: false,
+      volume: 80,
+      descriptions: true,
+      gridSize: 'medium',
+      smoothscroll: true
+    };
+
+    // Load settings from localStorage
+    function loadSettings() {
+      const savedSettings = localStorage.getItem('driveflix-settings');
+      if (savedSettings) {
+        settings = {...settings, ...JSON.parse(savedSettings)};
+        applySettings();
+      }
+
+      // Load profile data
+      const profileData = localStorage.getItem('driveflix-profile');
+      if (profileData) {
+        const profile = JSON.parse(profileData);
+        updateProfileDisplay(profile);
+      }
+    }
+
+    // Save settings to localStorage
+    function saveSettings() {
+      localStorage.setItem('driveflix-settings', JSON.stringify(settings));
+    }
+
+    // Apply settings to the interface
+    function applySettings() {
+      // Apply theme
+      document.body.setAttribute('data-theme', settings.theme);
+
+      // Apply animation speed
+      document.documentElement.style.setProperty('--animation-speed', settings.animationSpeed);
+
+      // Apply grid size
+      changeGridSize(settings.gridSize);
+
+      // Update toggle states
+      updateToggle('autoplayToggle', settings.autoplay);
+      updateToggle('autofullscreenToggle', settings.autofullscreen);
+      updateToggle('descriptionsToggle', settings.descriptions);
+      updateToggle('smoothscrollToggle', settings.smoothscroll);
+
+      // Update select values
+      document.getElementById('themeSelect').value = settings.theme;
+      document.getElementById('qualitySelect').value = settings.quality;
+      document.getElementById('gridSelect').value = settings.gridSize;
+
+      // Update sliders
+      document.getElementById('animationSlider').value = settings.animationSpeed;
+      document.getElementById('volumeSlider').value = settings.volume;
+
+      // Apply descriptions visibility
+      toggleDescriptions(settings.descriptions);
+
+      // Apply smooth scrolling
+      document.documentElement.style.scrollBehavior = settings.smoothscroll ? 'smooth' : 'auto';
+    }
+
+    function updateToggle(toggleId, active) {
+      const toggle = document.getElementById(toggleId);
+      if (toggle) {
+        if (active) {
+          toggle.classList.add('active');
+        } else {
+          toggle.classList.remove('active');
+        }
+      }
+    }
+
+    function toggleSettings() {
+      const panel = document.getElementById('settingsPanel');
+      const overlay = document.getElementById('settingsOverlay');
+
+      panel.classList.add('active');
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSettings() {
+      const panel = document.getElementById('settingsPanel');
+      const overlay = document.getElementById('settingsOverlay');
+
+      panel.classList.remove('active');
+      overlay.classList.remove('active');
+      document.body.style.overflow = 'auto';
+    }
+
+    function toggleSetting(element, settingName) {
+      element.classList.toggle('active');
+      settings[settingName] = element.classList.contains('active');
+      saveSettings();
+
+      // Apply specific setting changes
+      if (settingName === 'descriptions') {
+        toggleDescriptions(settings[settingName]);
+      } else if (settingName === 'smoothscroll') {
+        document.documentElement.style.scrollBehavior = settings[settingName] ? 'smooth' : 'auto';
+      }
+    }
+
+    function changeTheme(theme) {
+      settings.theme = theme;
+      document.body.setAttribute('data-theme', theme);
+      saveSettings();
+    }
+
+    function changeAnimationSpeed(speed) {
+      settings.animationSpeed = parseFloat(speed);
+      document.documentElement.style.setProperty('--animation-speed', speed);
+      saveSettings();
+    }
+
+    function changeQuality(quality) {
+      settings.quality = quality;
+      saveSettings();
+    }
+
+    function changeVolume(volume) {
+      settings.volume = parseInt(volume);
+      saveSettings();
+    }
+
+    function changeGridSize(size) {
+      settings.gridSize = size;
+      const movieCards = document.querySelectorAll('.movie-card');
+
+      movieCards.forEach(card => {
+        card.classList.remove('grid-small', 'grid-medium', 'grid-large');
+        card.classList.add(`grid-${size}`);
+      });
+
+      saveSettings();
+    }
+
+    function toggleDescriptions(show) {
+      const descriptions = document.querySelectorAll('.movie-description');
+      descriptions.forEach(desc => {
+        desc.style.display = show ? 'block' : 'none';
+      });
+    }
+
+    // Enhanced openFullscreen function with settings
+    const originalOpenFullscreen = openFullscreen;
+    openFullscreen = function (videoSrc, movieTitle, movieMeta, movieDesc) {
+      originalOpenFullscreen(videoSrc, movieTitle, movieMeta, movieDesc);
+
+      // Apply auto-fullscreen setting
+      if (settings.autofullscreen) {
+        setTimeout(() => {
+          toggleBrowserFullscreen();
+        }, 1000);
+      }
+    };
+
+    // Add CSS custom properties for animation speed
+    document.documentElement.style.setProperty('--animation-speed', '1');
+
+    // Profile Management Functions
+    let profileData = {
+      username: 'Guest',
+      email: 'Guest@streamx.com',
+      avatar: 'https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png',
+      themeColor: '#e50914'
+    };
+
+    function loadProfile() {
+      const savedProfile = localStorage.getItem('driveflix-profile');
+      if (savedProfile) {
+        profileData = {...profileData, ...JSON.parse(savedProfile)};
+        updateProfileDisplay(profileData);
+      }
+    }
+
+    function saveProfile() {
+      localStorage.setItem('driveflix-profile', JSON.stringify(profileData));
+    }
+
+    function updateProfileDisplay(profile) {
+      // Update profile preview in settings
+      const currentProfilePic = document.getElementById('currentProfilePic');
+      const currentProfileName = document.getElementById('currentProfileName');
+      const currentProfileEmail = document.getElementById('currentProfileEmail');
+      const headerProfileAvatar = document.getElementById('headerProfileAvatar');
+      const usernameInput = document.getElementById('usernameInput');
+
+      if (currentProfilePic) currentProfilePic.src = profile.avatar;
+      if (currentProfileName) currentProfileName.textContent = profile.username;
+      if (currentProfileEmail) currentProfileEmail.textContent = profile.email;
+      if (headerProfileAvatar) headerProfileAvatar.src = profile.avatar;
+      if (usernameInput) usernameInput.value = profile.username;
+
+      // Apply theme color
+      if (profile.themeColor) {
+        document.documentElement.style.setProperty('--theme-color', profile.themeColor);
+        updateColorSelection(profile.themeColor);
+      }
+    }
+
+    function editProfile() {
+      // Focus on username input
+      const usernameInput = document.getElementById('usernameInput');
+      if (usernameInput) {
+        usernameInput.focus();
+        usernameInput.select();
+      }
+    }
+
+    function updateUsername(username) {
+      if (username.trim()) {
+        profileData.username = username.trim();
+        saveProfile();
+        updateProfileDisplay(profileData);
+      }
+    }
+
+    function selectAvatar(avatarUrl) {
+      if (avatarUrl && avatarUrl.trim()) {
+        profileData.avatar = avatarUrl.trim();
+        saveProfile();
+        updateProfileDisplay(profileData);
+
+        // Update avatar selection visual feedback
+        const avatarOptions = document.querySelectorAll('.avatar-option');
+        avatarOptions.forEach(option => {
+          option.classList.remove('selected');
+          const img = option.querySelector('img');
+          if (img && img.src === avatarUrl) {
+            option.classList.add('selected');
+          }
+        });
+      }
+    }
+
+    function selectThemeColor(color) {
+      profileData.themeColor = color;
+      saveProfile();
+      updateProfileDisplay(profileData);
+
+      // Update color selection visual feedback
+      updateColorSelection(color);
+
+      // Apply theme color immediately
+      applyThemeColor(color);
+    }
+
+    function updateColorSelection(selectedColor) {
+      const colorOptions = document.querySelectorAll('.color-option');
+      colorOptions.forEach(option => {
+        option.classList.remove('selected');
+        if (option.dataset.color === selectedColor) {
+          option.classList.add('selected');
+        }
+      });
+    }
+
+    function applyThemeColor(color) {
+      // Update CSS custom properties for theme color
+      document.documentElement.style.setProperty('--theme-color', color);
+
+      // Update specific elements that use the theme color
+      const style = document.createElement('style');
+      style.textContent = `
+        .logo-text, .btn-primary:hover, .nav-links a:hover::before, 
+        .section-title::before, .meta-item, .meta-tag, .close-fullscreen,
+        .search-icon:hover, .settings-icon:hover, .notifications-icon:hover,
+        .profile-edit-btn, .toggle-switch.active, .setting-select:focus,
+        .search-input:focus { 
+          background: linear-gradient(135deg, ${color}, ${adjustColorBrightness(color, 20)}) !important;
+          border-color: ${color} !important;
+        }
+        .logo::after, .nav-links a::before, .movies-container::-webkit-scrollbar-thumb,
+        .trending-container::-webkit-scrollbar-thumb {
+          background: linear-gradient(90deg, ${color}, ${adjustColorBrightness(color, 20)}) !important;
+        }
+      `;
+
+      // Remove previous theme style if exists
+      const existingStyle = document.getElementById('theme-style');
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+
+      style.id = 'theme-style';
+      document.head.appendChild(style);
+    }
+
+    function adjustColorBrightness(color, percent) {
+      const num = parseInt(color.replace("#", ""), 16);
+      const amt = Math.round(2.55 * percent);
+      const R = (num >> 16) + amt;
+      const G = (num >> 8 & 0x00FF) + amt;
+      const B = (num & 0x0000FF) + amt;
+      return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+        (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+        (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+    }
+
+    function uploadAvatar(input) {
+      const file = input.files[0];
+      if (file && file.type.startsWith('image/')) {
+        // Check file size (limit to 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          alert('File size too large. Please choose an image under 5MB.');
+          input.value = '';
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const dataURL = e.target.result;
+          selectAvatar(dataURL);
+
+          // Clear the file input for next use
+          input.value = '';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        alert('Please select a valid image file.');
+        input.value = '';
+      }
+    }
+
+    // Series Episodes Toggle Function with Animation
+    function toggleSeriesEpisodes(seriesId) {
+      const episodesContainer = document.getElementById(seriesId + '-episodes');
+      const isCurrentlyOpen = episodesContainer.classList.contains('episodes-open');
+
+      // Close all other episodes first with animation
+      const allEpisodeContainers = document.querySelectorAll('.episodes-container');
+      allEpisodeContainers.forEach(container => {
+        if (container !== episodesContainer && container.classList.contains('episodes-open')) {
+          slideUpEpisodes(container);
+        }
+      });
+
+      // Toggle current episodes container
+      if (!isCurrentlyOpen) {
+        slideDownEpisodes(episodesContainer);
+      } else {
+        slideUpEpisodes(episodesContainer);
+      }
+    }
+
+    function slideDownEpisodes(container) {
+      // Prepare for animation
+      container.style.display = 'block';
+      container.style.maxHeight = '0px';
+      container.style.opacity = '0';
+      container.style.overflow = 'hidden';
+      container.classList.add('episodes-animating');
+
+      // Force a reflow
+      container.offsetHeight;
+
+      // Start animation
+      container.style.transition = 'max-height 0.6s cubic-bezier(0.23, 1, 0.320, 1), opacity 0.4s ease-out';
+      container.style.maxHeight = container.scrollHeight + 'px';
+      container.style.opacity = '1';
+
+      // Mark as open
+      container.classList.add('episodes-open');
+
+      // Clean up after animation
+      setTimeout(() => {
+        container.style.maxHeight = 'none';
+        container.style.overflow = 'visible';
+        container.classList.remove('episodes-animating');
+
+        // Scroll to view
+        container.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }, 600);
+    }
+
+    function slideUpEpisodes(container) {
+      // Prepare for animation
+      container.style.maxHeight = container.scrollHeight + 'px';
+      container.style.overflow = 'hidden';
+      container.classList.add('episodes-animating');
+
+      // Force a reflow
+      container.offsetHeight;
+
+      // Start animation
+      container.style.transition = 'max-height 0.5s cubic-bezier(0.23, 1, 0.320, 1), opacity 0.3s ease-in';
+      container.style.maxHeight = '0px';
+      container.style.opacity = '0';
+
+      // Mark as closed
+      container.classList.remove('episodes-open');
+
+      // Clean up after animation
+      setTimeout(() => {
+        container.style.display = 'none';
+        container.style.maxHeight = '';
+        container.style.opacity = '';
+        container.style.overflow = '';
+        container.style.transition = '';
+        container.classList.remove('episodes-animating');
+      }, 500);
+    }
+
+    // Bottom Navigation Functions
+    function showHome() {
+      // Update navigation
+      const navItems = document.querySelectorAll('.nav-item');
+      navItems.forEach(item => item.classList.remove('active'));
+      navItems[0].classList.add('active');
+
+      // Show/hide content
+      document.getElementById('mainContent').classList.remove('hidden');
+      document.getElementById('settingsContent').classList.remove('active');
+
+      // Close old settings panel if open
+      closeSettings();
+    }
+
+    function showSettings() {
+      // Update navigation
+      const navItems = document.querySelectorAll('.nav-item');
+      navItems.forEach(item => item.classList.remove('active'));
+      navItems[1].classList.add('active');
+
+      // Show/hide content
+      document.getElementById('mainContent').classList.add('hidden');
+      document.getElementById('settingsContent').classList.add('active');
+
+      // Close old settings panel if open
+      closeSettings();
+
+      // Sync settings with new settings area
+      syncSettingsToNewArea();
+    }
+
+    // Sync settings between old and new settings areas
+    function syncSettingsToNewArea() {
+      // Update all settings elements with 'settings' prefix
+      const autoplayToggle = document.getElementById('settingsAutoplayToggle');
+      const autofullscreenToggle = document.getElementById('settingsAutofullscreenToggle');
+      const descriptionsToggle = document.getElementById('settingsDescriptionsToggle');
+      const smoothscrollToggle = document.getElementById('settingsSmoothscrollToggle');
+
+      const themeSelect = document.getElementById('settingsThemeSelect');
+      const qualitySelect = document.getElementById('settingsQualitySelect');
+      const gridSelect = document.getElementById('settingsGridSelect');
+
+      const animationSlider = document.getElementById('settingsAnimationSlider');
+      const volumeSlider = document.getElementById('settingsVolumeSlider');
+
+      const usernameInput = document.getElementById('settingsUsernameInput');
+      const profilePic = document.getElementById('settingsProfilePic');
+      const profileName = document.getElementById('settingsProfileName');
+      const profileEmail = document.getElementById('settingsProfileEmail');
+      const avatarUpload = document.getElementById('settingsAvatarUpload');
+      const customAvatarInput = document.getElementById('settingsCustomAvatarInput');
+
+      // Sync toggle states
+      updateToggle('settingsAutoplayToggle', settings.autoplay);
+      updateToggle('settingsAutofullscreenToggle', settings.autofullscreen);
+      updateToggle('settingsDescriptionsToggle', settings.descriptions);
+      updateToggle('settingsSmoothscrollToggle', settings.smoothscroll);
+
+      // Sync select values
+      if (themeSelect) themeSelect.value = settings.theme;
+      if (qualitySelect) qualitySelect.value = settings.quality;
+      if (gridSelect) gridSelect.value = settings.gridSize;
+
+      // Sync slider values
+      if (animationSlider) animationSlider.value = settings.animationSpeed;
+      if (volumeSlider) volumeSlider.value = settings.volume;
+
+      // Sync profile data
+      if (usernameInput) usernameInput.value = profileData.username;
+      if (profilePic) profilePic.src = profileData.avatar;
+      if (profileName) profileName.textContent = profileData.username;
+      if (profileEmail) profileEmail.textContent = profileData.email;
+
+      // Update color selection
+      updateColorSelection(profileData.themeColor);
+    }
+
+    // Update profile display function to work with both areas
+    const originalUpdateProfileDisplay = updateProfileDisplay;
+    updateProfileDisplay = function(profile) {
+      originalUpdateProfileDisplay(profile);
+      
+      // Also update settings area elements
+      const settingsProfilePic = document.getElementById('settingsProfilePic');
+      const settingsProfileName = document.getElementById('settingsProfileName');
+      const settingsProfileEmail = document.getElementById('settingsProfileEmail');
+      const settingsUsernameInput = document.getElementById('settingsUsernameInput');
+
+      if (settingsProfilePic) settingsProfilePic.src = profile.avatar;
+      if (settingsProfileName) settingsProfileName.textContent = profile.username;
+      if (settingsProfileEmail) settingsProfileEmail.textContent = profile.email;
+      if (settingsUsernameInput) settingsUsernameInput.value = profile.username;
+    };
+
+    // Updated editProfile function to work with settings area
+    editProfile = function() {
+      // Focus on username input in settings area if we're on settings page
+      const settingsActive = document.getElementById('settingsContent').classList.contains('active');
+      const usernameInput = settingsActive ? 
+        document.getElementById('settingsUsernameInput') : 
+        document.getElementById('usernameInput');
+      
+      if (usernameInput) {
+        usernameInput.focus();
+        usernameInput.select();
+      }
+    };
+
+    // Updated uploadAvatar function to work with both upload inputs
+    uploadAvatar = function(input) {
+      const file = input.files[0];
+      if (file && file.type.startsWith('image/')) {
+        // Check file size (limit to 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          alert('File size too large. Please choose an image under 5MB.');
+          input.value = '';
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const dataURL = e.target.result;
+          selectAvatar(dataURL);
+
+          // Clear both file inputs for next use
+          const avatarUpload = document.getElementById('avatarUpload');
+          const settingsAvatarUpload = document.getElementById('settingsAvatarUpload');
+          if (avatarUpload) avatarUpload.value = '';
+          if (settingsAvatarUpload) settingsAvatarUpload.value = '';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        alert('Please select a valid image file.');
+        input.value = '';
+      }
+    };
+
+    // Add smooth transitions for page load
+    window.addEventListener('load', function () {
+      document.body.style.opacity = '1';
+      loadSettings();
+      loadProfile();
+    });
+  </script>
+
+
+</body>
+
+</html>
